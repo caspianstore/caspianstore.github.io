@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Caspian Store | iOS Ultimate</title>
+    <title>Caspian Store | Ultimate</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -12,11 +12,11 @@
             --primary: #0A84FF;
             --accent: #30D158;
             --danger: #FF453A;
+            --gold: #FFD700;
             --text: #FFFFFF;
             --text-sec: #8E8E93;
             --glass: rgba(28, 28, 30, 0.85);
         }
-
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
@@ -25,113 +25,91 @@
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
             margin: 0;
             overflow-x: hidden;
-            height: 100vh;
-            /* Ultra FPS Boost */
-            text-rendering: optimizeLegibility;
-            -webkit-font-smoothing: antialiased;
+            padding-bottom: 80px;
         }
 
-        /* 60-90 FPS Animasiyalar */
-        .fade-in { 
-            animation: fadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
-            opacity: 0;
-            will-change: transform, opacity; /* GPU-nu işə salır */
-        }
-        
-        .slide-up { 
-            animation: slideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
-            will-change: transform;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        /* GİRİŞ EKRANI */
-        #intro-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer;
-        }
-        #intro-text { font-size: 24px; font-weight: 300; letter-spacing: 2px; color: #fff; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(10, 132, 255, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(10, 132, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(10, 132, 255, 0); } }
 
         /* HEADER */
         header {
             position: fixed; top: 0; left: 0; right: 0;
             padding: 15px 20px;
             background: var(--glass);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
             z-index: 100; border-bottom: 0.5px solid #333;
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex; flex-direction: column; gap: 10px;
         }
-        .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
-        .user-badge { font-size: 10px; background: #333; padding: 5px 10px; border-radius: 20px; color: var(--text-sec); }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(to right, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        /* SEARCH BAR */
+        .search-container { position: relative; width: 100%; }
+        .search-input {
+            width: 100%; background: #2c2c2e; border: none; padding: 10px 40px 10px 15px;
+            border-radius: 10px; color: white; font-size: 14px;
+        }
+        .search-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #666; }
 
         /* MAIN CONTENT */
-        .container { padding: 80px 20px 100px 20px; }
+        .container { padding: 110px 20px 20px 20px; }
 
-        /* KATEQORİYALAR */
-        .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 30px; }
-        .cat-item {
-            background: var(--card); padding: 20px; border-radius: 18px;
-            text-align: center; font-weight: 600; font-size: 15px;
-            border: 1px solid #2c2c2e; transition: transform 0.2s;
+        /* LOGIN OVERLAY (iOS Style) */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(15px);
+            z-index: 9999; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; animation: fadeIn 0.5s;
         }
-        .cat-item:active { transform: scale(0.96); background: #333; }
+        .login-box {
+            background: #1c1c1e; width: 85%; padding: 30px; border-radius: 20px;
+            text-align: center; border: 1px solid #333;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
 
-        /* ELAN KARTLARI */
+        /* CATEGORIES */
+        .cat-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
+        .cat-scroll::-webkit-scrollbar { display: none; }
+        .cat-pill {
+            background: #2c2c2e; padding: 8px 16px; border-radius: 20px;
+            white-space: nowrap; font-size: 13px; font-weight: 600; color: #ccc;
+            border: 1px solid transparent; transition: 0.3s;
+        }
+        .cat-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* AD CARDS */
         .ad-card {
-            background: var(--card); border-radius: 24px; margin-bottom: 20px;
+            background: var(--card); border-radius: 18px; margin-bottom: 20px;
             overflow: hidden; border: 1px solid #2c2c2e; position: relative;
-            transform: translateZ(0); /* Hardware Acceleration */
-            transition: transform 0.3s ease;
+            animation: fadeIn 0.6s ease;
         }
-        .ad-card:active { transform: scale(0.98); }
-
-        .ad-img { width: 100%; height: 220px; object-fit: cover; }
+        .ad-card.hot-ad { border: 1px solid var(--gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
+        .hot-badge {
+            position: absolute; top: 10px; right: 10px; background: var(--gold); color: black;
+            font-size: 10px; padding: 4px 8px; border-radius: 10px; font-weight: 800; z-index: 2;
+        }
+        .verified-badge { color: #1DA1F2; margin-left: 4px; font-size: 14px; }
+        
+        .ad-img { width: 100%; height: 220px; object-fit: cover; background: #222; }
         .ad-content { padding: 15px; }
-        .ad-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .ad-price { font-size: 20px; font-weight: 700; color: var(--accent); }
-        .ad-title { font-size: 17px; margin: 0 0 10px 0; font-weight: 600; }
-        .ad-meta { font-size: 12px; color: var(--text-sec); margin-bottom: 15px; }
+        .ad-title { font-size: 17px; margin: 5px 0; font-weight: 600; display: flex; align-items: center; }
+        .ad-meta { font-size: 12px; color: var(--text-sec); display: flex; justify-content: space-between; margin-bottom: 12px; }
 
-        /* Sahibkar Kontrolü (Sil/Düzəlt) */
-        .owner-controls {
-            display: flex; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #333;
-        }
-        .btn-mini {
-            flex: 1; padding: 8px; border-radius: 8px; border: none; 
-            font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
-        }
-        .btn-delete { background: rgba(255, 69, 58, 0.2); color: var(--danger); }
-        .btn-edit { background: rgba(10, 132, 255, 0.2); color: var(--primary); }
-
-        /* DÜYMƏLƏR */
-        .btn {
-            display: block; width: 100%; padding: 14px;
-            border-radius: 14px; border: none; font-weight: 600; font-size: 15px;
-            cursor: pointer; margin-top: 8px; text-align: center; text-decoration: none;
-        }
+        /* BUTTONS */
+        .btn { padding: 12px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; width: 100%; margin-top: 5px; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-gold { background: linear-gradient(135deg, #FFD700, #FFA500); color: black; }
         .btn-glass { background: rgba(255,255,255,0.1); color: white; }
+        .btn-danger { background: rgba(255, 69, 58, 0.2); color: var(--danger); }
 
-        /* FAB & MENU */
+        /* FAB */
         .fab {
-            position: fixed; bottom: 30px; right: 20px;
-            width: 60px; height: 60px; background: var(--primary);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 30px rgba(10,132,255,0.4);
-            font-size: 24px; color: white; z-index: 500; transition: transform 0.3s;
-        }
-        .fab:active { transform: scale(0.8); }
-
-        .support-menu {
-            position: fixed; bottom: 30px; left: 20px;
-            width: 50px; height: 50px; background: #333;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 20px; color: white; z-index: 500;
+            position: fixed; bottom: 30px; right: 20px; width: 55px; height: 55px;
+            background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 10px 30px rgba(10,132,255,0.4); z-index: 500; font-size: 22px; color: white;
         }
 
         /* MODAL */
@@ -142,58 +120,76 @@
         }
         .sheet-content {
             background: #1c1c1e; width: 100%; padding: 25px 20px 40px 20px;
-            border-radius: 30px 30px 0 0; animation: slideUp 0.4s ease-out;
+            border-radius: 30px 30px 0 0; animation: slideDown 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) reverse; /* Up animation simulated */
             max-height: 90vh; overflow-y: auto;
         }
+        
         input, select, textarea {
-            width: 100%; background: #2c2c2e; border: none;
-            padding: 16px; border-radius: 12px; color: white;
-            margin-bottom: 12px; font-size: 16px; font-family: inherit;
+            width: 100%; background: #2c2c2e; border: none; padding: 15px;
+            border-radius: 12px; color: white; margin-bottom: 10px; font-size: 16px;
         }
-        input:focus { outline: 2px solid var(--primary); }
+        
+        .empty-state { text-align: center; padding: 50px 20px; color: #555; }
+        .admin-panel { padding: 10px; background: #222; border-radius: 10px; margin-top: 10px; border: 1px solid #444; }
+
     </style>
 </head>
 <body>
 
-    <div id="intro-screen" onclick="startApp()">
-        <i class="fas fa-fingerprint" style="font-size: 50px; color: #333; margin-bottom: 20px;"></i>
-        <div id="intro-text">BAŞLAMAQ ÜÇÜN TOXUN</div>
-        <div style="font-size: 12px; color: #555; margin-top: 10px;">Music & App Init...</div>
+    <div id="login-overlay">
+        <div class="login-box">
+            <i class="fas fa-shield-alt" style="font-size: 40px; color: var(--primary); margin-bottom: 20px;"></i>
+            <h2 style="margin:0 0 10px 0;">Caspian Store</h2>
+            <p style="color: #888; font-size: 13px; margin-bottom: 20px;">Davam etmək üçün ləqəb seçin.</p>
+            <input type="text" id="login-name" placeholder="Adınız (məs: User01)" style="text-align: center;">
+            <div id="admin-pass-field" style="display: none;">
+                <input type="password" id="login-pass" placeholder="Admin Kodu" style="text-align: center;">
+            </div>
+            <button class="btn btn-primary" onclick="attemptLogin()">Giriş Et</button>
+        </div>
     </div>
 
     <div id="app" style="display: none;">
         <header>
-            <div>
+            <div class="header-top">
                 <div class="logo">CASPIAN STORE</div>
-                <div class="user-badge" id="user-display">ID: ...</div>
+                <div style="font-size: 11px; color: var(--text-sec);" id="user-badge">ID: Loading...</div>
             </div>
-            <div><i class="fas fa-search" style="font-size: 20px;"></i></div>
+            <div class="search-container">
+                <input type="text" class="search-input" id="search-bar" placeholder="Axtar (Oyun adı, ID, söz...)" onkeyup="handleSearch()">
+                <i class="fas fa-search search-icon"></i>
+            </div>
         </header>
 
         <div class="container">
-            <div id="cat-wrapper" class="fade-in">
-                <h3 style="margin-left: 5px; opacity: 0.7;">Kateqoriyalar</h3>
-                <div class="cat-grid">
-                    <div class="cat-item" onclick="filterAds('Pubg')">Pubg Mobile</div>
-                    <div class="cat-item" onclick="filterAds('Black Russia')">Black Russia</div>
-                    <div class="cat-item" onclick="filterAds('Free Fire')">Free Fire</div>
-                    <div class="cat-item" onclick="filterAds('Brawl Stars')">Brawl Stars</div>
-                    <div class="cat-item" onclick="filterAds('Instagram')">Instagram</div>
-                    <div class="cat-item" onclick="filterAds('TikTok')">TikTok</div>
-                </div>
+            <div class="cat-scroll">
+                <div class="cat-pill active" onclick="filterAds('all', this)">Bütün</div>
+                <div class="cat-pill" onclick="filterAds('Pubg', this)">Pubg</div>
+                <div class="cat-pill" onclick="filterAds('Black Russia', this)">Black Russia</div>
+                <div class="cat-pill" onclick="filterAds('Free Fire', this)">Free Fire</div>
+                <div class="cat-pill" onclick="filterAds('Instagram', this)">Instagram</div>
+                <div class="cat-pill" onclick="filterAds('TikTok', this)">TikTok</div>
             </div>
 
-            <div id="ads-wrapper">
-                <h3 style="margin-left: 5px; opacity: 0.7; display: flex; justify-content: space-between;">
-                    <span id="list-title">Son Elanlar</span>
-                    <span onclick="resetFilter()" style="font-size:12px; color:var(--primary); cursor:pointer;">Hepsini gör</span>
-                </h3>
-                <div id="ads-list"></div>
+            <h3 style="opacity: 0.7; margin-bottom: 15px;">Son Elanlar</h3>
+            <div id="ads-list">
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i> Yüklənir...
+                </div>
             </div>
         </div>
 
-        <div class="fab" onclick="openAddForm()"><i class="fas fa-plus"></i></div>
-        <div class="support-menu" onclick="openSupport()"><i class="fas fa-headset"></i></div>
+        <div class="fab" onclick="openModal('addModal')"><i class="fas fa-plus"></i></div>
+
+        <div id="admin-tools-modal" class="sheet-modal">
+            <div class="sheet-content">
+                <h3>Admin İdarəetmə</h3>
+                <input type="text" id="admin-target-id" placeholder="İstifadəçi ID-si yaz">
+                <button class="btn btn-primary" onclick="adminAction('verify')">Mavi Tik Ver</button>
+                <button class="btn btn-danger" onclick="adminAction('ban')">Bu ID-ni BAN et</button>
+                <button class="btn btn-glass" onclick="closeModal('admin-tools-modal')">Bağla</button>
+            </div>
+        </div>
 
         <div id="addModal" class="sheet-modal">
             <div class="sheet-content">
@@ -209,248 +205,300 @@
                 </select>
                 <input type="text" id="new_title" placeholder="Başlıq (məs: 70 lvl, Full set)">
                 <input type="number" id="new_price" placeholder="Qiymət (AZN)">
-                <input type="tel" id="new_wp" placeholder="WhatsApp Nömrə (məs: 0501234567)">
-                <textarea id="new_desc" rows="3" placeholder="Hesab haqqında ətraflı..."></textarea>
-                <input type="text" id="new_img" placeholder="Şəkil Linki (URL) yapışdır">
-                <button class="btn btn-primary" onclick="publishAd()">Paylaş</button>
-                <button class="btn btn-glass" onclick="closeAddForm()">Ləğv et</button>
+                <input type="tel" id="new_wp" placeholder="WhatsApp (məs: 0501234567)">
+                <textarea id="new_desc" rows="3" placeholder="Hesab haqqında məlumat..."></textarea>
+                
+                <label style="color: #aaa; font-size: 13px; margin-left: 5px;">Elan Şəkli seçin:</label>
+                <input type="file" id="new_img_file" accept="image/*" style="padding: 10px;">
+                <p id="upload-status" style="font-size: 12px; color: var(--accent); display:none;">Şəkil yüklənir...</p>
+
+                <button class="btn btn-primary" onclick="uploadAndPublish()">Paylaş</button>
+                <button class="btn btn-glass" onclick="closeModal('addModal')">Ləğv et</button>
             </div>
         </div>
     </div>
 
-    <div id="music-container" style="opacity: 0; width: 0; height: 0; overflow: hidden;"></div>
+    <script type="module">
+        // -------------------------------------------------------------
+        // DİQQƏT: AŞAĞIDAKİ KODLARI ÖZ FIREBASE KODLARINLA DƏYİŞ!
+        // -------------------------------------------------------------
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, where, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-<script>
-    /* --- 1. SİSTEM BAŞLANĞICI --- */
-    let currentUser = {};
-
-    function startApp() {
-        // 1.1 Random Musiqi (Playlist)
-        const playlist = [
-            'rVkCOfUDCaM', 
-            'zJXhT4sVlK0', 
-            'sTUJ8huQUxQ', 
-            'J2_hEfReFFc'
-        ];
-        const randomSong = playlist[Math.floor(Math.random() * playlist.length)];
-        
-        document.getElementById('music-container').innerHTML =
-            `<iframe width="1" height="1" src="https://www.youtube.com/embed/${randomSong}?autoplay=1&loop=1&playlist=${randomSong}" frameborder="0" allow="autoplay"></iframe>`;
-
-        // 1.2 İstifadəçi Yoxlanışı
-        let storedUser = localStorage.getItem('caspian_user_v1');
-        if (storedUser) {
-            currentUser = JSON.parse(storedUser);
-        } else {
-            let name = prompt("Zəhmət olmasa adınızı qeyd edin:") || "İstifadəçi";
-            let randomID = Math.floor(10000 + Math.random() * 90000); 
-            currentUser = { name: name, id: randomID };
-            localStorage.setItem('caspian_user_v1', JSON.stringify(currentUser));
-        }
-
-        // 1.3 UI Yenilə
-        document.getElementById('user-display').innerText = `${currentUser.name} | ID: #${currentUser.id}`;
-        document.getElementById('intro-screen').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-
-        // 1.4 Elanları Yüklə
-        loadAds();
-    }
-
-    /* --- 2. ELAN SİSTEMİ --- */
-    const demoAds = [
-        {id: 77777, cat: "Nümunə Elan", title: "Caspian Store Nümunə Hesab", price: 777, wp: "994501234567", img: "https://i.ytimg.com/vi/HAnSg99BntE/maxresdefault.jpg", desc: "Bu sadəcə nümunədir.", sellerId: 0}
-    ];
-
-    function loadAds() {
-        let ads = JSON.parse(localStorage.getItem('caspian_ads_db')) || demoAds;
-        renderList(ads);
-    }
-
-    function renderList(adsArray) {
-        const container = document.getElementById('ads-list');
-        container.innerHTML = '';
-
-        adsArray.reverse().forEach((ad, index) => {
-            // Animasiya gecikməsi (Axıcılıq üçün)
-            let delay = index * 0.1; 
-            
-            // Sahibkar Kontrolü
-            let ownerTools = "";
-            if (ad.sellerId == currentUser.id) {
-                ownerTools = `
-                    <div class="owner-controls">
-                        <button class="btn-mini btn-edit" onclick="editAd(${ad.id})"><i class="fas fa-pen"></i> Qiyməti Dəyiş</button>
-                        <button class="btn-mini btn-delete" onclick="deleteAd(${ad.id})"><i class="fas fa-trash"></i> Sil</button>
-                    </div>
-                `;
-            }
-
-            container.innerHTML += `
-                <div class="ad-card fade-in" style="animation-delay: ${delay}s">
-                    <img src="${ad.img}" class="ad-img" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'">
-                    <div class="ad-content">
-                        <div class="ad-header">
-                            <span style="font-size:12px; background:#333; padding:4px 8px; border-radius:8px;">${ad.cat}</span>
-                            <span class="ad-price">${ad.price} AZN</span>
-                        </div>
-                        <h3 class="ad-title">${ad.title}</h3>
-                        <p class="ad-meta">ID: #${ad.id} • ${ad.desc.substring(0, 30)}...</p>
-
-                        <div style="display:flex; gap:10px;">
-                            <button class="btn btn-glass" style="flex:1; margin:0;" onclick="openWarning('${ad.wp}', '${ad.title}')">Satıcıya Yaz</button>
-                            <button class="btn btn-gold" style="flex:1; margin:0;" onclick="contactAraci('${ad.id}', '${ad.wp}', '${ad.cat}', '${ad.title}', '${ad.price}')">Aracı ilə Al</button>
-                        </div>
-                        ${ownerTools}
-                    </div>
-                </div>
-            `;
-        });
-    }
-
-    /* --- 3. YENİ FUNKSİYALAR (Silmə və Düzəltmə) --- */
-    function deleteAd(id) {
-        if(confirm("Bu elanı silmək istədiyinizə əminsiniz?")) {
-            let ads = JSON.parse(localStorage.getItem('caspian_ads_db')) || demoAds;
-            let newAds = ads.filter(ad => ad.id != id);
-            localStorage.setItem('caspian_ads_db', JSON.stringify(newAds));
-            loadAds();
-        }
-    }
-
-    function editAd(id) {
-        let ads = JSON.parse(localStorage.getItem('caspian_ads_db')) || demoAds;
-        let adIndex = ads.findIndex(ad => ad.id == id);
-        
-        if (adIndex > -1) {
-            let newPrice = prompt("Yeni qiyməti daxil edin:", ads[adIndex].price);
-            if (newPrice != null && newPrice != "") {
-                ads[adIndex].price = newPrice;
-                localStorage.setItem('caspian_ads_db', JSON.stringify(ads));
-                loadAds();
-            }
-        }
-    }
-
-    /* --- 4. STANDART FUNKSİYALAR --- */
-    function openAddForm() { document.getElementById('addModal').style.display = 'flex'; }
-    function closeAddForm() { document.getElementById('addModal').style.display = 'none'; }
-
-    function publishAd() {
-        const cat = document.getElementById('new_cat').value;
-        const title = document.getElementById('new_title').value;
-        const price = document.getElementById('new_price').value;
-        const wp = document.getElementById('new_wp').value;
-        const desc = document.getElementById('new_desc').value;
-        const img = document.getElementById('new_img').value || "https://via.placeholder.com/400x220?text=No+Image";
-
-        if(!title || !price || !wp) { alert("Vacib xanaları doldurun!"); return; }
-
-        const newAd = {
-            id: Math.floor(10000 + Math.random() * 90000),
-            cat: cat,
-            title: title,
-            price: price,
-            wp: wp,
-            desc: desc,
-            img: img,
-            sellerId: currentUser.id // ID mənimsədilir
+        const firebaseConfig = {
+            apiKey: "SENIN_API_KEY_KODUN",
+            authDomain: "SENIN_PROJECT.firebaseapp.com",
+            projectId: "SENIN_PROJECT_ID",
+            storageBucket: "SENIN_PROJECT.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
         };
 
-        let currentAds = JSON.parse(localStorage.getItem('caspian_ads_db')) || demoAds;
-        currentAds.push(newAd);
-        localStorage.setItem('caspian_ads_db', JSON.stringify(currentAds));
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
 
-        closeAddForm();
-        loadAds();
+        // --- GLOBAL VARIABLES ---
+        let currentUser = null;
+        let allAds = [];
+
+        // --- 1. USER SYSTEM & LOGIN ---
+        window.attemptLogin = async function() {
+            const nameInput = document.getElementById('login-name');
+            const passInput = document.getElementById('login-pass');
+            const name = nameInput.value.trim();
+
+            if (!name) return alert("Adınızı yazın!");
+
+            // Admin Check
+            if (name === "Adm19") {
+                document.getElementById('admin-pass-field').style.display = 'block';
+                if (passInput.value !== "said01") {
+                    return; // Pass wait
+                }
+            }
+
+            // Generate or Load ID
+            let storedId = localStorage.getItem('caspian_uid');
+            if (!storedId) {
+                storedId = Math.floor(10000 + Math.random() * 90000).toString();
+                localStorage.setItem('caspian_uid', storedId);
+            }
+
+            // Check Ban Status form Firebase
+            const userRef = doc(db, "users", storedId);
+            const userSnap = await getDoc(userRef);
+
+            let isAdmin = (name === "Adm19" && passInput.value === "said01");
+            let isVerified = false;
+
+            if (userSnap.exists()) {
+                const data = userSnap.data();
+                if (data.banned) {
+                    alert("SİZİN IP BLOKLANIB! (ID: " + storedId + ")");
+                    return;
+                }
+                isVerified = data.verified || false;
+            } else {
+                // Save new user
+                await setDoc(userRef, {
+                    name: name,
+                    id: storedId,
+                    joined: new Date(),
+                    banned: false,
+                    verified: false,
+                    isAdmin: isAdmin
+                });
+            }
+
+            currentUser = { name, id: storedId, isAdmin, verified: isVerified };
+            
+            // UI Update
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            document.getElementById('user-badge').innerHTML = `
+                <span onclick="${isAdmin ? "openModal('admin-tools-modal')" : ""}">${currentUser.name} | #${currentUser.id} ${currentUser.verified ? '<i class="fas fa-check-circle verified-badge"></i>' : ''}</span>
+            `;
+
+            loadAdsFromFirebase();
+        }
+
+        // --- 2. FIREBASE ADS SYSTEM ---
         
-        // Inputları təmizlə
-        document.getElementById('new_title').value = "";
-        document.getElementById('new_price').value = "";
-    }
+        // Şəkil Yüklə və Elan Paylaş
+        window.uploadAndPublish = async function() {
+            const fileInput = document.getElementById('new_img_file');
+            const file = fileInput.files[0];
+            
+            if (!file) { alert("Şəkil seçin!"); return; }
 
-    function filterAds(category) {
-        let ads = JSON.parse(localStorage.getItem('caspian_ads_db')) || demoAds;
-        let filtered = ads.filter(a => a.cat === category);
-        document.getElementById('list-title').innerText = category;
-        renderList(filtered);
-    }
+            document.getElementById('upload-status').style.display = 'block';
+            
+            try {
+                // 1. Şəkli Storage-a yüklə
+                const storageRef = ref(storage, 'ads_images/' + Date.now() + '_' + file.name);
+                await uploadBytes(storageRef, file);
+                const downloadURL = await getDownloadURL(storageRef);
 
-    function resetFilter() {
-        document.getElementById('list-title').innerText = "Bütün Elanlar";
-        loadAds();
-    }
+                // 2. Elanı Database-ə yaz
+                const adData = {
+                    cat: document.getElementById('new_cat').value,
+                    title: document.getElementById('new_title').value,
+                    price: document.getElementById('new_price').value,
+                    wp: document.getElementById('new_wp').value,
+                    desc: document.getElementById('new_desc').value,
+                    img: downloadURL,
+                    sellerId: currentUser.id,
+                    sellerName: currentUser.name,
+                    sellerVerified: currentUser.verified, // Mavi tik statusu elana yapışır
+                    date: Date.now(),
+                    isHot: false,
+                    hotUntil: 0
+                };
 
-    function contactAraci(id, sellerWp, cat, title, price) {
-        const myNum = "994771048394"; 
-        const msg = `🆔 *Elan ID* : ${id}\n📞 *Satıcı*: ${sellerWp}\n🎮 *Kateqoriya*: ${cat}\n📝 *Başlıq*: ${title}\n💰 *Qiymət*: ${price} AZN\n\nSalam. Mən bu elanı almaq üçün aracı xidməti istəyirəm.`;
-        window.open(`https://wa.me/${myNum}?text=${encodeURIComponent(msg)}`, '_blank');
-    }
-
-    function openSupport() {
-        // Köhnə confirm() əvəzinə müasir seçim paneli
-        const oldModal = document.getElementById('supportModal');
-        if(oldModal) oldModal.remove();
-
-        let supportDiv = document.createElement('div');
-        supportDiv.id = "supportModal";
-        supportDiv.className = "sheet-modal";
-        supportDiv.style.display = "flex";
-        
-        supportDiv.innerHTML = `
-            <div class="sheet-content fade-in">
-                <div style="width:40px; height:5px; background:#444; margin:0 auto 15px auto; border-radius:10px;"></div>
-                <h2 style="margin-top:0"><i class="fas fa-headset"></i> Dəstək Mərkəzi</h2>
-                <p style="color:var(--text-sec); font-size:14px; margin-bottom:20px;">Bizimlə hansı platformada əlaqə saxlamaq istəyirsiniz?</p>
+                await addDoc(collection(db, "ads"), adData);
                 
-                <button class="btn btn-primary" style="background:#25D366; margin-bottom:10px;" onclick="window.open('https://wa.me/994771048394', '_blank')">
-                    <i class="fab fa-whatsapp"></i> WhatsApp Aracı
-                </button>
-                
-                <button class="btn btn-primary" style="background:#0088cc; margin-bottom:10px;" onclick="window.open('https://t.me/mamedov7', '_blank')">
-                    <i class="fab fa-telegram-plane"></i> Telegram Aracı
-                </button>
-                
-                <button class="btn btn-glass" onclick="document.getElementById('supportModal').remove()">Ləğv et</button>
-            </div>`;
-        
-        document.body.appendChild(supportDiv);
-    }
+                alert("Elan uğurla paylaşıldı!");
+                closeModal('addModal');
+                document.getElementById('upload-status').style.display = 'none';
+                loadAdsFromFirebase(); // Yenilə
 
-    // --- YENİ İOS STİLİNDƏ XƏBƏRDARLIQ MODALI ---
-    let tempWp = ""; let tempTitle = "";
-    function openWarning(wp, title) {
-        tempWp = wp; tempTitle = title;
-        
-        const oldModal = document.getElementById('warningModal');
-        if(oldModal) oldModal.remove();
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Xəta baş verdi: " + error.message);
+                document.getElementById('upload-status').style.display = 'none';
+            }
+        }
 
-        let warnDiv = document.createElement('div');
-        warnDiv.id = "warningModal";
-        warnDiv.className = "sheet-modal";
-        warnDiv.style.display = "flex";
-        
-        warnDiv.innerHTML = `
-            <div class="sheet-content fade-in" style="border-top: 2px solid var(--danger);">
-                <div style="width:40px; height:5px; background:#444; margin:0 auto 15px auto; border-radius:10px;"></div>
-                <h2 style="color:var(--danger); margin-top:0;">⚠️ DİQQƏT!</h2>
-                <p style="font-size:14px; color:#cecece; line-height:1.4;">
-                    Tanımadığınız şəxslər ilə **Aracısız** alqı-satqı etmək risklidir. 
-                    Əgər hesabınız və ya pulunuz oğurlanarsa, **CASPIAN STORE** məsuliyyət daşımır!
-                </p>
-                <div style="margin-top:20px;">
-                    <button class="btn btn-primary" style="background:var(--primary); margin-bottom:10px;" onclick="confirmContact()">Anladım, Davam et</button>
-                    <button class="btn btn-glass" onclick="document.getElementById('warningModal').remove()">Ləğv et</button>
-                </div>
-            </div>`;
-        
-        document.body.appendChild(warnDiv);
-    }
+        // Elanları Gətir
+        async function loadAdsFromFirebase() {
+            const container = document.getElementById('ads-list');
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-sync fa-spin"></i> Yenilənir...</div>';
 
-    function confirmContact() {
-        window.open(`https://wa.me/${tempWp}?text=Salam, Caspian Store-dakı "${tempTitle}" elanı üçün yazıram.`, '_blank');
-        document.getElementById('warningModal').remove();
+            const q = query(collection(db, "ads"), orderBy("date", "desc"));
+            const querySnapshot = await getDocs(q);
+            
+            allAds = [];
+            querySnapshot.forEach((doc) => {
+                allAds.push({ uid: doc.id, ...doc.data() });
+            });
+
+            renderAds(allAds);
+        }
+
+        window.renderAds = function(adsArray) {
+            const container = document.getElementById('ads-list');
+            if (adsArray.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>Bura boşdur.</h3><p>Hələ ki, heç bir elan yoxdur.</p></div>';
+                return;
+            }
+
+            container.innerHTML = '';
+
+            adsArray.forEach(ad => {
+                // Hot Status Check
+                let isHot = ad.isHot && ad.hotUntil > Date.now();
+                let hotClass = isHot ? 'hot-ad' : '';
+                let hotBadge = isHot ? '<div class="hot-badge">🔥 HOT</div>' : '';
+
+                // Admin Controls
+                let adminControls = '';
+                if (currentUser.isAdmin) {
+                    adminControls = `
+                        <div class="admin-panel">
+                            <button class="btn-mini" onclick="deleteAd('${ad.uid}')" style="color:red">Sil</button>
+                            <button class="btn-mini" onclick="makeHot('${ad.uid}', 24)" style="color:orange">🔥 24s</button>
+                        </div>
+                    `;
+                } else if (currentUser.id == ad.sellerId) {
+                    adminControls = `<button class="btn btn-danger" style="margin-top:10px" onclick="deleteAd('${ad.uid}')">Elanı Sil</button>`;
+                }
+
+// Verified Badge
+let verifiedIcon = ad.sellerVerified ? 
+'<i class="fas fa-check-circle verified-badge" title="Təsdiqlənmiş Satıcı"></i>' : '';
+
+container.innerHTML += `
+    <div class="ad-card ${hotClass}">
+        ${hotBadge}
+        <img src="${ad.img}" class="ad-img" loading="lazy">
+        <div class="ad-content">
+            <div class="ad-meta">
+                <span>${ad.cat}</span>
+                <span>ID: #${ad.sellerId}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 class="ad-title">${ad.title}</h3>
+                <div class="ad-price">${ad.price} AZN</div>
+            </div>
+            <p style="font-size:13px; color:#aaa;">Satıcı: ${ad.sellerName} ${verifiedIcon}</p>
+            
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-glass" onclick="window.open('https://wa.me/${ad.wp}')">Satıcıya Yaz</button>
+                <button class="btn btn-gold" onclick="contactAraci('${ad.uid}', '${ad.wp}')">Aracı ilə Al</button>
+            </div>
+            ${adminControls}
+        </div>
+    </div>
+`;
+
+// --- 3. HELPER FUNCTIONS ---
+
+window.handleSearch = function() {
+    const query = document.getElementById('search-bar').value.toLowerCase();
+    const filtered = allAds.filter(ad => 
+        ad.title.toLowerCase().includes(query) || 
+        ad.sellerId.toString().includes(query) ||
+        ad.cat.toLowerCase().includes(query)
+    );
+    renderAds(filtered);
+}
+
+window.filterAds = function(cat, element) {
+    document.querySelectorAll('.cat-pill').forEach(el => el.classList.remove('active'));
+    element.classList.add('active');
+
+    if (cat === 'all') {
+        renderAds(allAds);
+    } else {
+        const filtered = allAds.filter(ad => ad.cat === cat);
+        renderAds(filtered);
     }
- </script>
-</body>
-</html>
+}
+
+// --- 4. ADMIN & ACTION FUNCTIONS ---
+
+window.deleteAd = async function(docId) {
+    if(!confirm("Silmək istəyirsən?")) return;
+    await deleteDoc(doc(db, "ads", docId));
+    loadAdsFromFirebase();
+}
+
+window.makeHot = async function(docId, hours) {
+    const until = Date.now() + (hours * 60 * 60 * 1000);
+
+    await updateDoc(doc(db, "ads", docId), {
+        isHot: true,
+        hotUntil: until
+    });
+    alert("Elan HOT edildi!");
+    loadAdsFromFirebase();
+}
+
+                             window.adminAction = async function(action) {
+    const targetId = document.getElementById('admin-target-id').value;
+    if(!targetId) return alert("ID daxil et!");
+
+    const userRef = doc(db, "users", targetId);
+
+    if (action === 'verify') {
+        await updateDoc(userRef, { verified: true });
+        alert("İstifadəçi Təsdiqləndi (Mavi Tik)!");
+    } else if (action === 'ban') {
+        await updateDoc(userRef, { banned: true });
+        alert("İstifadəçi BANLANDI!");
+    }
+    closeModal('admin-tools-modal');
+}
+
+window.contactAraci = function(id, sellerWp) {
+    window.open(`https://wa.me/994771048394?text=Salam, Elan ID: ${id} almaq isteyirem.`, '_blank');
+}
+
+// UI Modals
+window.openModal = (id) => { 
+    document.getElementById(id).style.display = 'flex'; 
+}
+window.closeModal = (id) => { 
+    document.getElementById(id).style.display = 'none'; 
+}
+
+// Expose functions globally for HTML onclick (Module scope fix)
+window.loadAdsFromFirebase = loadAdsFromFirebase;
+
+                </script>
+
+    </body>
+    </html>
