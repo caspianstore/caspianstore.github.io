@@ -261,116 +261,6 @@
             }
 
             // Generate or Load ID
-            let storedId = localStorage.getItem('caspian_uid');
-            if (!storedId) {
-                storedId = Math.floor(10000 + Math.random() * 90000).toString();
-                localStorage.setItem('caspian_uid', storedId);
-            }
-
-            // Check Ban Status form Firebase
-            const userRef = doc(db, "users", storedId);
-            const userSnap = await getDoc(userRef);
-
-            let isAdmin = (name === "Adm19" && passInput.value === "said01");
-            let isVerified = false;
-
-            if (userSnap.exists()) {
-                const data = userSnap.data();
-                if (data.banned) {
-                    alert("SİZİN IP BLOKLANIB! (ID: " + storedId + ")");
-                    return;
-                }
-                isVerified = data.verified || false;
-            } else {
-                // Save new user
-                await setDoc(userRef, {
-                    name: name,
-                    id: storedId,
-                    joined: new Date(),
-                    banned: false,
-                    verified: false,
-                    isAdmin: isAdmin
-                });
-            }
-
-            currentUser = { name, id: storedId, isAdmin, verified: isVerified };
-            
-            // UI Update
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-            document.getElementById('user-badge').innerHTML = `
-                <span onclick="${isAdmin ? "openModal('admin-tools-modal')" : ""}">${currentUser.name} | #${currentUser.id} ${currentUser.verified ? '<i class="fas fa-check-circle verified-badge"></i>' : ''}</span>
-            `;
-
-            loadAdsFromFirebase();
-        }
-
-        // --- 2. FIREBASE ADS SYSTEM ---
-        
-        // Şəkil Yüklə və Elan Paylaş
-        window.uploadAndPublish = async function() {
-            const fileInput = document.getElementById('new_img_file');
-            const file = fileInput.files[0];
-            
-            if (!file) { alert("Şəkil seçin!"); return; }
-
-            document.getElementById('upload-status').style.display = 'block';
-            
-            try {
-                // 1. Şəkli Storage-a yüklə
-                const storageRef = ref(storage, 'ads_images/' + Date.now() + '_' + file.name);
-                await uploadBytes(storageRef, file);
-                const downloadURL = await getDownloadURL(storageRef);
-
-                // 2. Elanı Database-ə yaz
-                const adData = {
-                    cat: document.getElementById('new_cat').value,
-                    title: document.getElementById('new_title').value,
-                    price: document.getElementById('new_price').value,
-                    wp: document.getElementById('new_wp').value,
-                    desc: document.getElementById('new_desc').value,
-                    img: downloadURL,
-                    sellerId: currentUser.id,
-                    sellerName: currentUser.name,
-                    sellerVerified: currentUser.verified, // Mavi tik statusu elana yapışır
-                    date: Date.now(),
-                    isHot: false,
-                    hotUntil: 0
-                };
-
-                await addDoc(collection(db, "ads"), adData);
-                
-                alert("Elan uğurla paylaşıldı!");
-                closeModal('addModal');
-                document.getElementById('upload-status').style.display = 'none';
-                loadAdsFromFirebase(); // Yenilə
-
-            } catch (error) {
-                console.error("Error:", error);
-                alert("Xəta baş verdi: " + error.message);
-                document.getElementById('upload-status').style.display = 'none';
-            }
-        }
-
-        // Elanları Gətir
-        async function loadAdsFromFirebase() {
-            const container = document.getElementById('ads-list');
-            container.innerHTML = '<div class="empty-state"><i class="fas fa-sync fa-spin"></i> Yenilənir...</div>';
-
-            const q = query(collection(db, "ads"), orderBy("date", "desc"));
-            const querySnapshot = await getDocs(q);
-            
-            allAds = [];
-            querySnapshot.forEach((doc) => {
-                allAds.push({ uid: doc.id, ...doc.data() });
-            });
-
-            renderAds(allAds);
-        }
-
-        window.renderAds = function(adsArray) {
-            const container = document.getElementById('ads-list');
-            if (adsArray.length === 0) {
                 container.innerHTML = '<div class="empty-state"><h3>Bura boşdur.</h3><p>Hələ ki, heç bir elan yoxdur.</p></div>';
                 return;
             }
@@ -422,83 +312,225 @@ container.innerHTML += `
             ${adminControls}
         </div>
     </div>
-`;
 
-// --- 3. HELPER FUNCTIONS ---
 
-window.handleSearch = function() {
-    const query = document.getElementById('search-bar').value.toLowerCase();
-    const filtered = allAds.filter(ad => 
-        ad.title.toLowerCase().includes(query) || 
-        ad.sellerId.toString().includes(query) ||
-        ad.cat.toLowerCase().includes(query)
-    );
-    renderAds(filtered);
-}
+<script type="module">
+    // 1. Kitabxanaları çağırırıq
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, orderBy, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-window.filterAds = function(cat, element) {
-    document.querySelectorAll('.cat-pill').forEach(el => el.classList.remove('active'));
-    element.classList.add('active');
+    // 2. SƏNİN FIREBASE KODLARIN (Buranı mütləq doldur!)
+    const firebaseConfig = {
+        apiKey: "BURA_API_KEY_YAZ",
+        authDomain: "BURA_PROJECT_ID.firebaseapp.com",
+        projectId: "BURA_PROJECT_ID",
+        storageBucket: "BURA_PROJECT_ID.appspot.com",
+        messagingSenderId: "SENDER_ID",
+        appId: "APP_ID"
+    };
 
-    if (cat === 'all') {
-        renderAds(allAds);
-    } else {
-        const filtered = allAds.filter(ad => ad.cat === cat);
-        renderAds(filtered);
+    // Global dəyişənlər
+    let db, storage, allAds = [];
+    window.currentUser = null; // Useri qlobal edirik
+
+    // 3. Firebase-i Təhlükəsiz Başlatmaq
+    try {
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        storage = getStorage(app);
+        console.log("Firebase uğurla qoşuldu!");
+    } catch (error) {
+        console.error("Firebase Xətası:", error);
+        alert("Sistem xətası: Firebase açarları düzgün deyil və ya internet yoxdur. (F12 basıb Console-a bax)");
     }
-}
 
-// --- 4. ADMIN & ACTION FUNCTIONS ---
+    // ==========================================
+    // 4. GİRİŞ FUNKSİYASI (ƏN VACİB HİSSƏ)
+    // ==========================================
+    window.attemptLogin = async function() {
+        console.log("Giriş düyməsi basıldı..."); // Konsolda bunu görməlisən
+        
+        const nameInput = document.getElementById('login-name');
+        const passInput = document.getElementById('login-pass');
+        const name = nameInput.value.trim();
 
-window.deleteAd = async function(docId) {
-    if(!confirm("Silmək istəyirsən?")) return;
-    await deleteDoc(doc(db, "ads", docId));
-    loadAdsFromFirebase();
-}
+        if (!name) { 
+            alert("Zəhmət olmasa adınızı yazın!"); 
+            return; 
+        }
 
-window.makeHot = async function(docId, hours) {
-    const until = Date.now() + (hours * 60 * 60 * 1000);
+        // Admin yoxlanışı
+        if (name === "Adm19") {
+            const passField = document.getElementById('admin-pass-field');
+            if (passField.style.display === 'none') {
+                passField.style.display = 'block';
+                return;
+            }
+            if (passInput.value !== "said01") {
+                alert("Şifrə səhvdir!");
+                return;
+            }
+        }
 
-    await updateDoc(doc(db, "ads", docId), {
-        isHot: true,
-        hotUntil: until
-    });
-    alert("Elan HOT edildi!");
-    loadAdsFromFirebase();
-}
+        // ID Yaradılması və ya Yüklənməsi
+        let storedId = localStorage.getItem('caspian_uid');
+        if (!storedId) {
+            storedId = Math.floor(10000 + Math.random() * 90000).toString();
+            localStorage.setItem('caspian_uid', storedId);
+        }
 
-                             window.adminAction = async function(action) {
-    const targetId = document.getElementById('admin-target-id').value;
-    if(!targetId) return alert("ID daxil et!");
+        // Firebase-də istifadəçini yoxla (Əgər db işləyirsə)
+        let isVerified = false;
+        let isBanned = false;
 
-    const userRef = doc(db, "users", targetId);
+        if (db) {
+            try {
+                const userRef = doc(db, "users", storedId);
+                const userSnap = await getDoc(userRef);
 
-    if (action === 'verify') {
-        await updateDoc(userRef, { verified: true });
-        alert("İstifadəçi Təsdiqləndi (Mavi Tik)!");
-    } else if (action === 'ban') {
-        await updateDoc(userRef, { banned: true });
-        alert("İstifadəçi BANLANDI!");
+                if (userSnap.exists()) {
+                    const data = userSnap.data();
+                    if (data.banned) {
+                        alert("SİZİN ID BLOKLANIB: " + storedId);
+                        return;
+                    }
+                    isVerified = data.verified || false;
+                } else {
+                    // Yeni istifadəçi
+                    await setDoc(userRef, {
+                        name: name,
+                        id: storedId,
+                        joined: new Date(),
+                        banned: false,
+                        verified: false
+                    });
+                }
+            } catch (e) {
+                console.warn("İnternet zəifdir və ya Firebase xətası, oflayn davam edilir.", e);
+            }
+        }
+
+        // Girişi tamamla
+        const isAdmin = (name === "Adm19");
+        window.currentUser = { name, id: storedId, isAdmin, verified: isVerified || isAdmin };
+
+        // Ekranı dəyiş
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+
+        // Badge yenilə
+        let verifyBadge = window.currentUser.verified ? '<i class="fas fa-check-circle verified-badge" style="color:#1DA1F2; margin-left:5px;"></i>' : '';
+        document.getElementById('user-badge').innerHTML = 
+            `<span onclick="${isAdmin ? "openModal('admin-tools-modal')" : ""}">${name} | #${storedId} ${verifyBadge}</span>`;
+
+        // Elanları yüklə
+        if (db) loadAdsFromFirebase();
+    };
+
+    // ==========================================
+    // DİGƏR FUNKSİYALAR (Hamsını window.-a bağla)
+    // ==========================================
+    
+    window.loadAdsFromFirebase = async function() {
+        if(!db) return;
+        const container = document.getElementById('ads-list');
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Yüklənir...</div>';
+        
+        try {
+            const q = query(collection(db, "ads"), orderBy("date", "desc"));
+            const querySnapshot = await getDocs(q);
+            allAds = [];
+            querySnapshot.forEach((doc) => allAds.push({ uid: doc.id, ...doc.data() }));
+            renderAds(allAds);
+        } catch(e) {
+            console.error("Elanları çəkə bilmədim:", e);
+            container.innerHTML = '<div class="empty-state">Xəta: Elanlar yüklənmədi.</div>';
+        }
     }
-    closeModal('admin-tools-modal');
-}
 
-window.contactAraci = function(id, sellerWp) {
-    window.open(`https://wa.me/994771048394?text=Salam, Elan ID: ${id} almaq isteyirem.`, '_blank');
-}
+    window.renderAds = function(adsArray) {
+        const container = document.getElementById('ads-list');
+        if (adsArray.length === 0) {
+            container.innerHTML = '<div class="empty-state"><h3>Elan yoxdur</h3></div>';
+            return;
+        }
+        container.innerHTML = '';
+        adsArray.forEach(ad => {
+            let isHot = ad.isHot && ad.hotUntil > Date.now();
+            let hotClass = isHot ? 'hot-ad' : '';
+            let hotBadge = isHot ? '<div class="hot-badge" style="position:absolute; top:10px; right:10px; background:gold; padding:2px 8px; border-radius:10px; font-weight:bold;">🔥 HOT</div>' : '';
+            let verifiedIcon = ad.sellerVerified ? '<i class="fas fa-check-circle" style="color:#1DA1F2;"></i>' : '';
+            
+            // Admin düymələri
+            let adminBtns = '';
+            if(window.currentUser.isAdmin) {
+                adminBtns = `<div style="margin-top:10px; border-top:1px solid #333; padding-top:5px;">
+                    <button class="btn-mini" onclick="deleteAd('${ad.uid}')" style="color:red; background:none; border:none; cursor:pointer;">Sil</button>
+                    <button class="btn-mini" onclick="makeHot('${ad.uid}', 24)" style="color:orange; background:none; border:none; cursor:pointer;">🔥 Hot et</button>
+                </div>`;
+            }
 
-// UI Modals
-window.openModal = (id) => { 
-    document.getElementById(id).style.display = 'flex'; 
-}
-window.closeModal = (id) => { 
-    document.getElementById(id).style.display = 'none'; 
-}
+            container.innerHTML += `
+                <div class="ad-card ${hotClass}" style="position:relative; background:#1c1c1e; margin-bottom:15px; border-radius:15px; overflow:hidden; border: ${isHot ? '1px solid gold' : '1px solid #333'}">
+                    ${hotBadge}
+                    <img src="${ad.img}" style="width:100%; height:200px; object-fit:cover;">
+                    <div style="padding:15px;">
+                        <div style="display:flex; justify-content:space-between; color:#888; font-size:12px;">
+                            <span>${ad.cat}</span><span>#${ad.sellerId}</span>
+                        </div>
+                        <h3>${ad.title}</h3>
+                        <div style="font-size:20px; color:#30D158; font-weight:bold;">${ad.price} AZN</div>
+                        <p style="font-size:12px; color:#aaa;">Satıcı: ${ad.sellerName} ${verifiedIcon}</p>
+                        <button class="btn btn-glass" onclick="window.open('https://wa.me/${ad.wp}')" style="width:100%; padding:10px; border-radius:10px; border:none; background:rgba(255,255,255,0.1); color:#fff; cursor:pointer;">Satıcıya Yaz</button>
+                        ${adminBtns}
+                    </div>
+                </div>
+            `;
+        });
+    }
 
-// Expose functions globally for HTML onclick (Module scope fix)
-window.loadAdsFromFirebase = loadAdsFromFirebase;
+    // Upload function
+    window.uploadAndPublish = async function() {
+        if(!db) return alert("Verilənlər bazası qoşulmayıb!");
+        const file = document.getElementById('new_img_file').files[0];
+        if(!file) return alert("Şəkil seçin!");
+        
+        document.getElementById('upload-status').style.display = 'block';
+        try {
+            const storageRef = ref(storage, 'ads_images/' + Date.now() + '_' + file.name);
+            await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(storageRef);
+            
+            await addDoc(collection(db, "ads"), {
+                cat: document.getElementById('new_cat').value,
+                title: document.getElementById('new_title').value,
+                price: document.getElementById('new_price').value,
+                wp: document.getElementById('new_wp').value,
+                desc: document.getElementById('new_desc').value,
+                img: url,
+                sellerId: window.currentUser.id,
+                sellerName: window.currentUser.name,
+                sellerVerified: window.currentUser.verified,
+                date: Date.now(), isHot: false, hotUntil: 0
+            });
+            alert("Paylaşıldı!");
+            closeModal('addModal');
+            loadAdsFromFirebase();
+        } catch(e) {
+            console.error(e);
+            alert("Xəta: " + e.message);
+        }
+        document.getElementById('upload-status').style.display = 'none';
+    }
 
-                </script>
+    // Helper functions
+    window.deleteAd = async (id) => { if(confirm('Silirsən?')) { await deleteDoc(doc(db, 'ads', id)); loadAdsFromFirebase(); }};
+    window.makeHot = async (id, h) => { await updateDoc(doc(db, 'ads', id), {isHot:true, hotUntil: Date.now() + h*3600000}); alert('Hot oldu'); loadAdsFromFirebase(); };
+    window.openModal = (id) => document.getElementById(id).style.display = 'flex';
+    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 
+</script>
+    
     </body>
     </html>
