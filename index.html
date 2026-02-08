@@ -1,536 +1,802 @@
 <!DOCTYPE html>
 <html lang="az">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Caspian Store | Ultimate</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --bg: #000000;
-            --card: #1c1c1e;
-            --primary: #0A84FF;
-            --accent: #30D158;
-            --danger: #FF453A;
-            --gold: #FFD700;
-            --text: #FFFFFF;
-            --text-sec: #8E8E93;
-            --glass: rgba(28, 28, 30, 0.85);
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Caspian Store | Local Ultimate</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    :root {
+        --bg: #242424;
+        --card: #2c2c2e;
+        --primary: #0A84FF;
+        --accent: #30D158;
+        --danger: #FF453A;
+        --gold: #FFD700;
+        --text: #FFFFFF;
+        --text-sec: #A1A1A1;
+        --glass: rgba(36, 36, 36, 0.95);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            overflow-x: hidden;
-            padding-bottom: 80px;
-        }
+    body {
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Roboto, sans-serif;
+        margin: 0;
+        padding-bottom: 90px;
+        overflow-x: hidden;
+        user-select: none;
+    }
 
-        /* Animations */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(10, 132, 255, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(10, 132, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(10, 132, 255, 0); } }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pulse-gold { 0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); } }
 
-        /* HEADER */
-        header {
-            position: fixed; top: 0; left: 0; right: 0;
-            padding: 15px 20px;
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            z-index: 100; border-bottom: 0.5px solid #333;
-            display: flex; flex-direction: column; gap: 10px;
-        }
-        .header-top { display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(to right, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
-        /* SEARCH BAR */
-        .search-container { position: relative; width: 100%; }
-        .search-input {
-            width: 100%; background: #2c2c2e; border: none; padding: 10px 40px 10px 15px;
-            border-radius: 10px; color: white; font-size: 14px;
-        }
-        .search-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #666; }
+    #start-screen {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: #000; z-index: 9999; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; cursor: pointer;
+    }
 
-        /* MAIN CONTENT */
-        .container { padding: 110px 20px 20px 20px; }
+    header {
+        position: fixed; top: 0; left: 0; right: 0;
+        padding: 15px 20px; background: var(--glass);
+        backdrop-filter: blur(10px); z-index: 100;
+        border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;
+    }
+    .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+    .id-badge { font-size: 12px; background: #333; padding: 5px 10px; border-radius: 20px; color: var(--text-sec); cursor: pointer; }
+    .search-box { flex: 1; margin: 0 15px; }
+    .search-box input { width: 100%; padding: 8px 12px; background: #333; border: none; border-radius: 10px; color: white; font-size: 12px; }
 
-        /* LOGIN OVERLAY (iOS Style) */
-        #login-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(15px);
-            z-index: 9999; display: flex; align-items: center; justify-content: center;
-            flex-direction: column; animation: fadeIn 0.5s;
-        }
-        .login-box {
-            background: #1c1c1e; width: 85%; padding: 30px; border-radius: 20px;
-            text-align: center; border: 1px solid #333;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
+    .cat-scroll {
+        display: flex; gap: 10px; overflow-x: auto; padding: 80px 15px 10px 15px;
+        scrollbar-width: none;
+    }
+    .cat-scroll::-webkit-scrollbar { display: none; }
+    .cat-item {
+        background: #333; padding: 8px 16px; border-radius: 20px;
+        white-space: nowrap; font-size: 13px; font-weight: 600; color: #ccc;
+        transition: 0.3s; cursor: pointer;
+    }
+    .cat-item.active { background: var(--text); color: black; }
 
-        /* CATEGORIES */
-        .cat-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
-        .cat-scroll::-webkit-scrollbar { display: none; }
-        .cat-pill {
-            background: #2c2c2e; padding: 8px 16px; border-radius: 20px;
-            white-space: nowrap; font-size: 13px; font-weight: 600; color: #ccc;
-            border: 1px solid transparent; transition: 0.3s;
-        }
-        .cat-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .container { padding: 10px 15px; }
+    
+    .ad-card {
+        background: var(--card); border-radius: 16px; margin-bottom: 20px;
+        overflow: hidden; position: relative; border: 1px solid #333;
+        animation: fadeIn 0.5s ease; cursor: pointer;
+    }
+    .ad-card.hot {
+        border: 2px solid var(--gold);
+        animation: pulse-gold 2s infinite;
+    }
+    .ad-card.sold { opacity: 0.5; pointer-events: none; }
+    .hot-badge {
+        position: absolute; top: 10px; right: 10px; background: var(--gold);
+        color: black; font-weight: bold; font-size: 10px; padding: 4px 8px; border-radius: 8px; z-index: 2;
+    }
+    .sold-badge {
+        position: absolute; top: 10px; right: 10px; background: var(--danger);
+        color: white; font-weight: bold; font-size: 10px; padding: 4px 8px; border-radius: 8px; z-index: 2;
+    }
 
-        /* AD CARDS */
-        .ad-card {
-            background: var(--card); border-radius: 18px; margin-bottom: 20px;
-            overflow: hidden; border: 1px solid #2c2c2e; position: relative;
-            animation: fadeIn 0.6s ease;
-        }
-        .ad-card.hot-ad { border: 1px solid var(--gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
-        .hot-badge {
-            position: absolute; top: 10px; right: 10px; background: var(--gold); color: black;
-            font-size: 10px; padding: 4px 8px; border-radius: 10px; font-weight: 800; z-index: 2;
-        }
-        .verified-badge { color: #1DA1F2; margin-left: 4px; font-size: 14px; }
-        
-        .ad-img { width: 100%; height: 220px; object-fit: cover; background: #222; }
-        .ad-content { padding: 15px; }
-        .ad-price { font-size: 20px; font-weight: 700; color: var(--accent); }
-        .ad-title { font-size: 17px; margin: 5px 0; font-weight: 600; display: flex; align-items: center; }
-        .ad-meta { font-size: 12px; color: var(--text-sec); display: flex; justify-content: space-between; margin-bottom: 12px; }
+    .slider-container { position: relative; width: 100%; height: 220px; background: #000; }
+    .slider-img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .slider-img.active { display: block; animation: fadeIn 0.3s; }
+    .slider-btn {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        background: rgba(0,0,0,0.5); color: white; border: none;
+        padding: 10px; cursor: pointer; z-index: 2; border-radius: 50%;
+    }
+    .prev-btn { left: 10px; } .next-btn { right: 10px; }
 
-        /* BUTTONS */
-        .btn { padding: 12px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; width: 100%; margin-top: 5px; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-gold { background: linear-gradient(135deg, #FFD700, #FFA500); color: black; }
-        .btn-glass { background: rgba(255,255,255,0.1); color: white; }
-        .btn-danger { background: rgba(255, 69, 58, 0.2); color: var(--danger); }
+    .ad-content { padding: 15px; }
+    .ad-price { font-size: 20px; font-weight: 700; color: var(--accent); }
+    .ad-title { font-size: 17px; margin: 5px 0; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+    .verified-icon { color: #1DA1F2; font-size: 14px; }
+    
+    .btn { width: 100%; padding: 12px; border-radius: 12px; border: none; font-weight: 600; margin-top: 8px; cursor: pointer; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-gold { background: linear-gradient(135deg, #FFD700, #FFA500); color: black; }
+    .btn-glass { background: rgba(255,255,255,0.1); color: white; }
+    .btn-danger { background: rgba(255, 69, 58, 0.2); color: var(--danger); }
+    .btn-mini { padding: 6px 10px; font-size: 11px; margin: 4px 4px 4px 0; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    
+    .action-row { display: flex; gap: 10px; }
 
-        /* FAB */
-        .fab {
-            position: fixed; bottom: 30px; right: 20px; width: 55px; height: 55px;
-            background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 30px rgba(10,132,255,0.4); z-index: 500; font-size: 22px; color: white;
-        }
+    .fab {
+        position: fixed; bottom: 30px; right: 20px; width: 55px; height: 55px;
+        background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 500; font-size: 22px; color: white; cursor: pointer;
+    }
+    .support-fab {
+        position: fixed; bottom: 30px; left: 20px; width: 50px; height: 50px;
+        background: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        z-index: 500; font-size: 20px; color: white; cursor: pointer;
+    }
 
-        /* MODAL */
-        .sheet-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-            z-index: 2000; display: none; align-items: flex-end;
-        }
-        .sheet-content {
-            background: #1c1c1e; width: 100%; padding: 25px 20px 40px 20px;
-            border-radius: 30px 30px 0 0; animation: slideDown 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) reverse; /* Up animation simulated */
-            max-height: 90vh; overflow-y: auto;
-        }
-        
-        input, select, textarea {
-            width: 100%; background: #2c2c2e; border: none; padding: 15px;
-            border-radius: 12px; color: white; margin-bottom: 10px; font-size: 16px;
-        }
-        
-        .empty-state { text-align: center; padding: 50px 20px; color: #555; }
-        .admin-panel { padding: 10px; background: #222; border-radius: 10px; margin-top: 10px; border: 1px solid #444; }
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+        z-index: 2000; display: none; align-items: flex-end;
+    }
+    .modal-content {
+        background: #1c1c1e; width: 100%; padding: 25px 20px 40px 20px;
+        border-radius: 25px 25px 0 0; animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        max-height: 90vh; overflow-y: auto;
+    }
+    .modal-handle { width: 40px; height: 5px; background: #444; margin: 0 auto 20px auto; border-radius: 10px; }
 
-    </style>
+    input, select, textarea {
+        width: 100%; background: #2c2c2e; border: 1px solid #333; padding: 15px;
+        border-radius: 12px; color: white; margin-bottom: 10px; font-size: 16px;
+    }
+
+    #admin-login-box { display: none; margin-bottom: 15px; padding: 10px; background: #222; border-radius: 10px; }
+    
+    .ban-message { background: var(--danger); padding: 20px; text-align: center; color: white; font-size: 16px; }
+    .user-profile { padding: 15px; background: #2c2c2e; border-radius: 12px; margin-bottom: 15px; }
+    .user-profile h3 { margin: 0; }
+    .user-profile p { margin: 5px 0; font-size: 12px; color: #aaa; }
+</style>
 </head>
 <body>
 
-    <div id="login-overlay">
-        <div class="login-box">
-            <i class="fas fa-shield-alt" style="font-size: 40px; color: var(--primary); margin-bottom: 20px;"></i>
-            <h2 style="margin:0 0 10px 0;">Caspian Store</h2>
-            <p style="color: #888; font-size: 13px; margin-bottom: 20px;">Davam etmək üçün ləqəb seçin.</p>
-            <input type="text" id="login-name" placeholder="Adınız (məs: User01)" style="text-align: center;">
-            <div id="admin-pass-field" style="display: none;">
-                <input type="password" id="login-pass" placeholder="Admin Kodu" style="text-align: center;">
-            </div>
-            <button class="btn btn-primary" onclick="attemptLogin()">Giriş Et</button>
-        </div>
+    <div id="start-screen" onclick="initApp()">
+        <i class="fas fa-play-circle" style="font-size: 60px; color: #fff; margin-bottom: 20px;"></i>
+        <div style="font-size: 20px; letter-spacing: 2px;">CASPIAN STORE</div>
+        <div style="font-size: 12px; color: #666; margin-top: 10px;">Daxil olmaq üçün toxunun</div>
     </div>
 
     <div id="app" style="display: none;">
         <header>
-            <div class="header-top">
-                <div class="logo">CASPIAN STORE</div>
-                <div style="font-size: 11px; color: var(--text-sec);" id="user-badge">ID: Loading...</div>
+            <div class="logo">CASPIAN STORE</div>
+            <div class="search-box">
+                <input type="text" id="search-user" placeholder="ID ilə axtar..." onkeyup="searchUser()">
             </div>
-            <div class="search-container">
-                <input type="text" class="search-input" id="search-bar" placeholder="Axtar (Oyun adı, ID, söz...)" onkeyup="handleSearch()">
-                <i class="fas fa-search search-icon"></i>
-            </div>
+            <div class="id-badge" id="user-display" onclick="toggleAdminPanel()">ID: ...</div>
         </header>
 
-        <div class="container">
-            <div class="cat-scroll">
-                <div class="cat-pill active" onclick="filterAds('all', this)">Bütün</div>
-                <div class="cat-pill" onclick="filterAds('Pubg', this)">Pubg</div>
-                <div class="cat-pill" onclick="filterAds('Black Russia', this)">Black Russia</div>
-                <div class="cat-pill" onclick="filterAds('Free Fire', this)">Free Fire</div>
-                <div class="cat-pill" onclick="filterAds('Instagram', this)">Instagram</div>
-                <div class="cat-pill" onclick="filterAds('TikTok', this)">TikTok</div>
-            </div>
-
-            <h3 style="opacity: 0.7; margin-bottom: 15px;">Son Elanlar</h3>
-            <div id="ads-list">
-                <div class="empty-state">
-                    <i class="fas fa-spinner fa-spin"></i> Yüklənir...
-                </div>
+        <div id="admin-login-box" class="modal-overlay" style="align-items: center; justify-content: center;">
+            <div style="background: #222; padding: 20px; border-radius: 15px; width: 80%;">
+                <h3>Admin Girişi</h3>
+                <input type="text" id="login-name" placeholder="Ad (Adm19)">
+                <input type="password" id="login-pass" placeholder="Kod">
+                <button class="btn btn-primary" onclick="attemptAdminLogin()">Giriş</button>
+                <button class="btn btn-glass" onclick="closeAdminLogin()">Bağla</button>
             </div>
         </div>
+
+        <div class="cat-scroll">
+            <div class="cat-item active" onclick="filterAds('all', this)">Son Elanlar</div>
+            <div class="cat-item" onclick="filterAds('Pubg', this)">Pubg</div>
+            <div class="cat-item" onclick="filterAds('Free Fire', this)">Free Fire</div>
+            <div class="cat-item" onclick="filterAds('Brawl Stars', this)">Brawl Stars</div>
+            <div class="cat-item" onclick="filterAds('Black Russia', this)">Black Russia</div>
+            <div class="cat-item" onclick="filterAds('TikTok', this)">TikTok</div>
+            <div class="cat-item" onclick="filterAds('Instagram', this)">Instagram</div>
+        </div>
+
+        <div class="container" id="ads-list"></div>
 
         <div class="fab" onclick="openModal('addModal')"><i class="fas fa-plus"></i></div>
-
-        <div id="admin-tools-modal" class="sheet-modal">
-            <div class="sheet-content">
-                <h3>Admin İdarəetmə</h3>
-                <input type="text" id="admin-target-id" placeholder="İstifadəçi ID-si yaz">
-                <button class="btn btn-primary" onclick="adminAction('verify')">Mavi Tik Ver</button>
-                <button class="btn btn-danger" onclick="adminAction('ban')">Bu ID-ni BAN et</button>
-                <button class="btn btn-glass" onclick="closeModal('admin-tools-modal')">Bağla</button>
-            </div>
-        </div>
-
-        <div id="addModal" class="sheet-modal">
-            <div class="sheet-content">
-                <div style="width:40px; height:5px; background:#444; margin:0 auto 20px auto; border-radius:10px;"></div>
-                <h2 style="margin-top:0">Yeni Elan</h2>
-                <select id="new_cat">
-                    <option value="Pubg">Pubg Mobile</option>
-                    <option value="Black Russia">Black Russia</option>
-                    <option value="Free Fire">Free Fire</option>
-                    <option value="Brawl Stars">Brawl Stars</option>
-                    <option value="Instagram">Instagram</option>
-                    <option value="TikTok">TikTok</option>
-                </select>
-                <input type="text" id="new_title" placeholder="Başlıq (məs: 70 lvl, Full set)">
-                <input type="number" id="new_price" placeholder="Qiymət (AZN)">
-                <input type="tel" id="new_wp" placeholder="WhatsApp (məs: 0501234567)">
-                <textarea id="new_desc" rows="3" placeholder="Hesab haqqında məlumat..."></textarea>
-                
-                <label style="color: #aaa; font-size: 13px; margin-left: 5px;">Elan Şəkli seçin:</label>
-                <input type="file" id="new_img_file" accept="image/*" style="padding: 10px;">
-                <p id="upload-status" style="font-size: 12px; color: var(--accent); display:none;">Şəkil yüklənir...</p>
-
-                <button class="btn btn-primary" onclick="uploadAndPublish()">Paylaş</button>
-                <button class="btn btn-glass" onclick="closeModal('addModal')">Ləğv et</button>
-            </div>
-        </div>
+        <div class="support-fab" onclick="openModal('supportModal')"><i class="fas fa-headset"></i></div>
     </div>
 
-    <script type="module">
-        // -------------------------------------------------------------
-        // DİQQƏT: AŞAĞIDAKİ KODLARI ÖZ FIREBASE KODLARINLA DƏYİŞ!
-        // -------------------------------------------------------------
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, where, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
-        const firebaseConfig = {
-            apiKey: "SENIN_API_KEY_KODUN",
-            authDomain: "SENIN_PROJECT.firebaseapp.com",
-            projectId: "SENIN_PROJECT_ID",
-            storageBucket: "SENIN_PROJECT.appspot.com",
-            messagingSenderId: "SENDER_ID",
-            appId: "APP_ID"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const storage = getStorage(app);
-
-        // --- GLOBAL VARIABLES ---
-        let currentUser = null;
-        let allAds = [];
-
-        // --- 1. USER SYSTEM & LOGIN ---
-        window.attemptLogin = async function() {
-            const nameInput = document.getElementById('login-name');
-            const passInput = document.getElementById('login-pass');
-            const name = nameInput.value.trim();
-
-            if (!name) return alert("Adınızı yazın!");
-
-            // Admin Check
-            if (name === "Adm19") {
-                document.getElementById('admin-pass-field').style.display = 'block';
-                if (passInput.value !== "said01") {
-                    return; // Pass wait
-                }
-            }
-
-            // Generate or Load ID
-                container.innerHTML = '<div class="empty-state"><h3>Bura boşdur.</h3><p>Hələ ki, heç bir elan yoxdur.</p></div>';
-                return;
-            }
-
-            container.innerHTML = '';
-
-            adsArray.forEach(ad => {
-                // Hot Status Check
-                let isHot = ad.isHot && ad.hotUntil > Date.now();
-                let hotClass = isHot ? 'hot-ad' : '';
-                let hotBadge = isHot ? '<div class="hot-badge">🔥 HOT</div>' : '';
-
-                // Admin Controls
-                let adminControls = '';
-                if (currentUser.isAdmin) {
-                    adminControls = `
-                        <div class="admin-panel">
-                            <button class="btn-mini" onclick="deleteAd('${ad.uid}')" style="color:red">Sil</button>
-                            <button class="btn-mini" onclick="makeHot('${ad.uid}', 24)" style="color:orange">🔥 24s</button>
-                        </div>
-                    `;
-                } else if (currentUser.id == ad.sellerId) {
-                    adminControls = `<button class="btn btn-danger" style="margin-top:10px" onclick="deleteAd('${ad.uid}')">Elanı Sil</button>`;
-                }
-
-// Verified Badge
-let verifiedIcon = ad.sellerVerified ? 
-'<i class="fas fa-check-circle verified-badge" title="Təsdiqlənmiş Satıcı"></i>' : '';
-
-container.innerHTML += `
-    <div class="ad-card ${hotClass}">
-        ${hotBadge}
-        <img src="${ad.img}" class="ad-img" loading="lazy">
-        <div class="ad-content">
-            <div class="ad-meta">
-                <span>${ad.cat}</span>
-                <span>ID: #${ad.sellerId}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3 class="ad-title">${ad.title}</h3>
-                <div class="ad-price">${ad.price} AZN</div>
-            </div>
-            <p style="font-size:13px; color:#aaa;">Satıcı: ${ad.sellerName} ${verifiedIcon}</p>
+    <div id="addModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-handle"></div>
+            <h2>Yeni Elan</h2>
+            <select id="new_cat">
+                <option value="Pubg">Pubg Mobile</option>
+                <option value="Free Fire">Free Fire</option>
+                <option value="Brawl Stars">Brawl Stars</option>
+                <option value="Black Russia">Black Russia</option>
+                <option value="TikTok">TikTok</option>
+                <option value="Instagram">Instagram</option>
+            </select>
+            <input type="text" id="new_title" placeholder="Başlıq (məs: 70 lvl, Full)">
+            <input type="number" id="new_price" placeholder="Qiymət (AZN)">
+            <input type="tel" id="new_wp" placeholder="WhatsApp (məs: 994501234567)">
+            <textarea id="new_desc" rows="3" placeholder="Ətraflı məlumat..."></textarea>
             
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-glass" onclick="window.open('https://wa.me/${ad.wp}')">Satıcıya Yaz</button>
-                <button class="btn btn-gold" onclick="contactAraci('${ad.uid}', '${ad.wp}')">Aracı ilə Al</button>
-            </div>
-            ${adminControls}
+            <label style="font-size: 12px; color: #aaa;">Şəkillər (Maks 5 ədəd)</label>
+            <input type="file" id="new_imgs" multiple accept="image/*">
+            
+            <button class="btn btn-primary" onclick="publishAd()">Paylaş</button>
+            <button class="btn btn-glass" onclick="closeModal('addModal')">Ləğv et</button>
         </div>
     </div>
 
+    <div id="warningModal" class="modal-overlay">
+        <div class="modal-content" style="border-top: 2px solid var(--danger);">
+            <div class="modal-handle"></div>
+            <h2 style="color: var(--danger)">⚠️ DİQQƏT!</h2>
+            <p style="color: #ccc; font-size: 14px; line-height: 1.5;">
+                Siz birbaşa satıcıya yazırsınız.<br>
+                Caspian Store, satıcı ilə aranızda olan danışıqlara və ödənişlərə görə <b>məsuliyyət daşımır</b>.<br><br>
+                Təhlükəsizlik üçün <b>"Aracı ilə Al"</b> seçimini tövsiyə edirik.
+            </p>
+            <div class="action-row">
+                <button class="btn btn-glass" onclick="closeModal('warningModal')">Geri</button>
+                <button class="btn btn-primary" id="confirm-seller-btn">Başa düşdüm, Yaz</button>
+            </div>
+        </div>
+    </div>
 
-<script type="module">
-    // 1. Kitabxanaları çağırırıq
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, orderBy, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+    <div id="supportModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-handle"></div>
+            <h2><i class="fas fa-headset"></i> Dəstək</h2>
+            <button class="btn btn-primary" style="background: #25D366;" onclick="window.open('https://wa.me/994771048394', '_blank')">
+                <i class="fab fa-whatsapp"></i> WhatsApp Dəstək
+            </button>
+            <button class="btn btn-primary" style="background: #0088cc;" onclick="window.open('https://t.me/mamedov7', '_blank')">
+                <i class="fab fa-telegram-plane"></i> Telegram Dəstək
+            </button>
+            <button class="btn btn-glass" onclick="closeModal('supportModal')">Bağla</button>
+        </div>
+    </div>
 
-    // 2. SƏNİN FIREBASE KODLARIN (Buranı mütləq doldur!)
-    const firebaseConfig = {
-        apiKey: "BURA_API_KEY_YAZ",
-        authDomain: "BURA_PROJECT_ID.firebaseapp.com",
-        projectId: "BURA_PROJECT_ID",
-        storageBucket: "BURA_PROJECT_ID.appspot.com",
-        messagingSenderId: "SENDER_ID",
-        appId: "APP_ID"
-    };
+    <div id="detailModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-handle"></div>
+            <div id="detail-content"></div>
+            <button class="btn btn-glass" onclick="closeModal('detailModal')">Bağla</button>
+        </div>
+    </div>
 
-    // Global dəyişənlər
-    let db, storage, allAds = [];
-    window.currentUser = null; // Useri qlobal edirik
+    <div id="userProfileModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-handle"></div>
+            <div id="profile-content"></div>
+            <button class="btn btn-glass" onclick="closeModal('userProfileModal')">Bağla</button>
+        </div>
+    </div>
 
-    // 3. Firebase-i Təhlükəsiz Başlatmaq
-    try {
-        const app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        storage = getStorage(app);
-        console.log("Firebase uğurla qoşuldu!");
-    } catch (error) {
-        console.error("Firebase Xətası:", error);
-        alert("Sistem xətası: Firebase açarları düzgün deyil və ya internet yoxdur. (F12 basıb Console-a bax)");
+    <div id="banListModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-handle"></div>
+            <h2>🚫 Ban Listi</h2>
+            <div id="ban-list-content"></div>
+            <button class="btn btn-glass" onclick="closeModal('banListModal')">Bağla</button>
+        </div>
+    </div>
+
+    <div id="hotPaymentModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-handle"></div>
+            <h2>💰 HOT Ödəniş</h2>
+            <p style="color: #aaa; font-size: 13px; margin-bottom: 15px;">Elanınızı ön sıraya çəkmək üçün müddət seçin:</p>
+            <button class="btn btn-gold" onclick="purchaseHot(currentHotAdId, 24, 0.49)">24 Saat - 0.49₼</button>
+            <button class="btn btn-gold" onclick="purchaseHot(currentHotAdId, 48, 0.79)">48 Saat - 0.79₼</button>
+            <button class="btn btn-gold" onclick="purchaseHot(currentHotAdId, 72, 1.19)">72 Saat - 1.19₼</button>
+            <button class="btn btn-glass" onclick="closeModal('hotPaymentModal')">Ləğv et</button>
+        </div>
+    </div>
+
+    <div id="banReasonModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-handle"></div>
+            <h2>🚫 IP Ban Et</h2>
+            <input type="text" id="ban-user-id" placeholder="Banlayacağınız User ID">
+            <textarea id="ban-reason" rows="3" placeholder="Ban sebebini yazın (istifadəçi görecək)..."></textarea>
+            <button class="btn btn-danger" onclick="confirmBanUser()">Banlancı</button>
+            <button class="btn btn-glass" onclick="closeModal('banReasonModal')">Ləğv et</button>
+        </div>
+    </div>
+
+    <div id="music-player" style="position:fixed; top:-1000px; opacity:0;"></div>
+
+<script>
+    let currentUser = JSON.parse(localStorage.getItem('caspian_user_local')) || null;
+    let allAds = JSON.parse(localStorage.getItem('caspian_ads_local')) || [];
+    let bannedIPs = JSON.parse(localStorage.getItem('caspian_banned_ips')) || [];
+    let currentHotAdId = null;
+    let userIP = null;
+
+    // IP alıntısı (simulyasiya)
+    function getUserIP() {
+        return 'IP_' + Math.random().toString(36).substr(2, 9).toUpperCase();
     }
 
-    // ==========================================
-    // 4. GİRİŞ FUNKSİYASI (ƏN VACİB HİSSƏ)
-    // ==========================================
-    window.attemptLogin = async function() {
-        console.log("Giriş düyməsi basıldı..."); // Konsolda bunu görməlisən
-        
-        const nameInput = document.getElementById('login-name');
-        const passInput = document.getElementById('login-pass');
-        const name = nameInput.value.trim();
-
-        if (!name) { 
-            alert("Zəhmət olmasa adınızı yazın!"); 
-            return; 
-        }
-
-        // Admin yoxlanışı
-        if (name === "Adm19") {
-            const passField = document.getElementById('admin-pass-field');
-            if (passField.style.display === 'none') {
-                passField.style.display = 'block';
-                return;
-            }
-            if (passInput.value !== "said01") {
-                alert("Şifrə səhvdir!");
-                return;
-            }
-        }
-
-        // ID Yaradılması və ya Yüklənməsi
-        let storedId = localStorage.getItem('caspian_uid');
-        if (!storedId) {
-            storedId = Math.floor(10000 + Math.random() * 90000).toString();
-            localStorage.setItem('caspian_uid', storedId);
-        }
-
-        // Firebase-də istifadəçini yoxla (Əgər db işləyirsə)
-        let isVerified = false;
-        let isBanned = false;
-
-        if (db) {
-            try {
-                const userRef = doc(db, "users", storedId);
-                const userSnap = await getDoc(userRef);
-
-                if (userSnap.exists()) {
-                    const data = userSnap.data();
-                    if (data.banned) {
-                        alert("SİZİN ID BLOKLANIB: " + storedId);
-                        return;
-                    }
-                    isVerified = data.verified || false;
-                } else {
-                    // Yeni istifadəçi
-                    await setDoc(userRef, {
-                        name: name,
-                        id: storedId,
-                        joined: new Date(),
-                        banned: false,
-                        verified: false
-                    });
-                }
-            } catch (e) {
-                console.warn("İnternet zəifdir və ya Firebase xətası, oflayn davam edilir.", e);
-            }
-        }
-
-        // Girişi tamamla
-        const isAdmin = (name === "Adm19");
-        window.currentUser = { name, id: storedId, isAdmin, verified: isVerified || isAdmin };
-
-        // Ekranı dəyiş
-        document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-
-        // Badge yenilə
-        let verifyBadge = window.currentUser.verified ? '<i class="fas fa-check-circle verified-badge" style="color:#1DA1F2; margin-left:5px;"></i>' : '';
-        document.getElementById('user-badge').innerHTML = 
-            `<span onclick="${isAdmin ? "openModal('admin-tools-modal')" : ""}">${name} | #${storedId} ${verifyBadge}</span>`;
-
-        // Elanları yüklə
-        if (db) loadAdsFromFirebase();
-    };
-
-    // ==========================================
-    // DİGƏR FUNKSİYALAR (Hamsını window.-a bağla)
-    // ==========================================
-    
-    window.loadAdsFromFirebase = async function() {
-        if(!db) return;
-        const container = document.getElementById('ads-list');
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Yüklənir...</div>';
-        
-        try {
-            const q = query(collection(db, "ads"), orderBy("date", "desc"));
-            const querySnapshot = await getDocs(q);
-            allAds = [];
-            querySnapshot.forEach((doc) => allAds.push({ uid: doc.id, ...doc.data() }));
-            renderAds(allAds);
-        } catch(e) {
-            console.error("Elanları çəkə bilmədim:", e);
-            container.innerHTML = '<div class="empty-state">Xəta: Elanlar yüklənmədi.</div>';
-        }
+    function isIPBanned(ip) {
+        return bannedIPs.some(ban => ban.ip === ip);
     }
 
-    window.renderAds = function(adsArray) {
-        const container = document.getElementById('ads-list');
-        if (adsArray.length === 0) {
-            container.innerHTML = '<div class="empty-state"><h3>Elan yoxdur</h3></div>';
+    function getBanReason(ip) {
+        const ban = bannedIPs.find(b => b.ip === ip);
+        return ban ? ban.reason : null;
+    }
+
+    function initApp() {
+        userIP = getUserIP();
+
+        // IP ban kontrolü
+        if (isIPBanned(userIP)) {
+            const reason = getBanReason(userIP);
+            document.body.innerHTML = `
+                <div class="ban-message">
+                    <h2>🚫 Sizin ID'niz Banlanıb</h2>
+                    <p style="margin: 20px 0; font-size: 14px;">${reason || 'Səbəb açıklanmamışdır.'}</p>
+                    <p style="font-size: 12px; color: #ccc;">Admin desteyi için: wa.me/994771048394</p>
+                </div>
+            `;
             return;
         }
-        container.innerHTML = '';
-        adsArray.forEach(ad => {
-            let isHot = ad.isHot && ad.hotUntil > Date.now();
-            let hotClass = isHot ? 'hot-ad' : '';
-            let hotBadge = isHot ? '<div class="hot-badge" style="position:absolute; top:10px; right:10px; background:gold; padding:2px 8px; border-radius:10px; font-weight:bold;">🔥 HOT</div>' : '';
-            let verifiedIcon = ad.sellerVerified ? '<i class="fas fa-check-circle" style="color:#1DA1F2;"></i>' : '';
+
+        // User yoxla
+        if (!currentUser) {
+            const newId = Math.floor(100000 + Math.random() * 900000).toString();
+            currentUser = { 
+                id: newId, 
+                name: "User", 
+                isAdmin: false, 
+                isBanned: false, 
+                isVerified: false,
+                ip: userIP,
+                createdAt: new Date().toISOString()
+            };
+            saveUser();
+        }
+
+        if (currentUser.isBanned) {
+            alert("SİZİN ID BANLANIB!");
+            document.body.innerHTML = "<h1 style='color:white; text-align:center; margin-top:50px;'>BANLANDINIZ</h1>";
+            return;
+        }
+
+        // Musiqi
+        const playlist = ['rVkCOfUDCaM', 'PfnJ7lRX0pY', 'zJXhT4sVlK0'];
+        const randomVid = playlist[Math.floor(Math.random() * playlist.length)];
+        document.getElementById('music-player').innerHTML = 
+            `<iframe width="1" height="1" src="https://www.youtube.com/embed/${randomVid}?autoplay=1&loop=1&playlist=${playlist.join(',')}" frameborder="0" allow="autoplay"></iframe>`;
+
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        updateUserUI();
+        renderAds(allAds);
+    }
+
+    function saveUser() { 
+        localStorage.setItem('caspian_user_local', JSON.stringify(currentUser)); 
+    }
+
+    function saveAds() { 
+        localStorage.setItem('caspian_ads_local', JSON.stringify(allAds)); 
+    }
+
+    function saveBans() {
+        localStorage.setItem('caspian_banned_ips', JSON.stringify(bannedIPs));
+    }
+
+    function updateUserUI() {
+        let badgeHTML = `ID: #${currentUser.id}`;
+        if (currentUser.isAdmin) badgeHTML += ` <span style="color:red">(ADMIN)</span>`;
+        else if (currentUser.isVerified) badgeHTML += ` <i class="fas fa-check-circle" style="color:#1DA1F2"></i>`;
+        document.getElementById('user-display').innerHTML = badgeHTML;
+    }
+
+    async function publishAd() {
+        const fileInput = document.getElementById('new_imgs');
+        if (fileInput.files.length === 0) return alert("Ən azı 1 şəkil seçin!");
+        if (fileInput.files.length > 5) return alert("Maksimum 5 şəkil!");
+
+        const imagesBase64 = [];
+        for (let file of fileInput.files) {
+            const base64 = await toBase64(file);
+            imagesBase64.push(base64);
+        }
+
+        const newAd = {
+            id: Date.now().toString(),
+            sellerId: currentUser.id,
+            sellerName: currentUser.name,
+            sellerVerified: currentUser.isVerified,
+            cat: document.getElementById('new_cat').value,
+            title: document.getElementById('new_title').value,
+            price: document.getElementById('new_price').value,
+            wp: document.getElementById('new_wp').value,
+            desc: document.getElementById('new_desc').value,
+            images: imagesBase64,
+            isHot: false,
+            hotExpire: null,
+            isSold: false,
+            timestamp: Date.now()
+        };
+
+        if(!newAd.title || !newAd.price || !newAd.wp) return alert("Xanaları doldurun!");
+
+        allAds.unshift(newAd);
+        saveAds();
+        closeModal('addModal');
+        renderAds(allAds);
+        
+        document.getElementById('new_title').value = "";
+        document.getElementById('new_price').value = "";
+        document.getElementById('new_wp').value = "";
+        document.getElementById('new_desc').value = "";
+        document.getElementById('new_imgs').value = "";
+    }
+
+    function renderAds(ads) {
+        const list = document.getElementById('ads-list');
+        list.innerHTML = "";
+        
+        // HOT elanları başa al
+        const sortedAds = ads.sort((a, b) => {
+            if (a.isHot && !b.isHot) return -1;
+            if (!a.isHot && b.isHot) return 1;
+            return b.timestamp - a.timestamp;
+        });
+
+        sortedAds.forEach(ad => {
+            if (ad.isSold) return; // Satıldı elanları g��stermə
             
-            // Admin düymələri
-            let adminBtns = '';
-            if(window.currentUser.isAdmin) {
-                adminBtns = `<div style="margin-top:10px; border-top:1px solid #333; padding-top:5px;">
-                    <button class="btn-mini" onclick="deleteAd('${ad.uid}')" style="color:red; background:none; border:none; cursor:pointer;">Sil</button>
-                    <button class="btn-mini" onclick="makeHot('${ad.uid}', 24)" style="color:orange; background:none; border:none; cursor:pointer;">🔥 Hot et</button>
-                </div>`;
+            const isHot = ad.isHot ? 'hot' : '';
+            const hotBadge = ad.isHot ? '<div class="hot-badge">🔥 HOT</div>' : '';
+            const verifiedBadge = ad.sellerVerified ? '<i class="fas fa-check-circle verified-icon"></i>' : '';
+            
+            let imgsHTML = "";
+            ad.images.forEach((img, idx) => {
+                imgsHTML += `<img src="${img}" class="slider-img ${idx === 0 ? 'active' : ''}" data-idx="${idx}">`;
+            });
+
+            let ownerPanel = "";
+            if (currentUser.id === ad.sellerId && !currentUser.isAdmin) {
+                ownerPanel = `
+                    <div style="background:#000; padding:10px; margin-top:10px; border-radius:10px;">
+                        <small style="color:#FFD700">SİZ SADİCƏ:</small><br>
+                        <button class="btn-mini" onclick="deleteAd('${ad.id}')">❌ Sil</button>
+                        <button class="btn-mini" onclick="openHotPayment('${ad.id}')">💰 HOT Et</button>
+                        <button class="btn-mini" onclick="markAsSold('${ad.id}')">✅ Satıldı</button>
+                    </div>`;
             }
 
-            container.innerHTML += `
-                <div class="ad-card ${hotClass}" style="position:relative; background:#1c1c1e; margin-bottom:15px; border-radius:15px; overflow:hidden; border: ${isHot ? '1px solid gold' : '1px solid #333'}">
+            let adminPanel = "";
+            if (currentUser.isAdmin) {
+                adminPanel = `
+                    <div style="background:#000; padding:10px; margin-top:10px; border-radius:10px;">
+                        <small style="color:red">ADMIN PANEL:</small><br>
+                        <button class="btn-mini" onclick="deleteAd('${ad.id}')">❌ Sil</button>
+                        <button class="btn-mini" onclick="toggleHot('${ad.id}')">🔥 Hot</button>
+                        <button class="btn-mini" onclick="markAsSold('${ad.id}')">✅ Satıldı</button>
+                        <button class="btn-mini" onclick="openBanModal('${ad.sellerId}')">🚫 Ban</button>
+                    </div>`;
+            }
+
+            list.innerHTML += `
+                <div class="ad-card ${isHot}" id="ad-${ad.id}" onclick="showAdDetail('${ad.id}')">
                     ${hotBadge}
-                    <img src="${ad.img}" style="width:100%; height:200px; object-fit:cover;">
-                    <div style="padding:15px;">
-                        <div style="display:flex; justify-content:space-between; color:#888; font-size:12px;">
-                            <span>${ad.cat}</span><span>#${ad.sellerId}</span>
+                    <div class="slider-container" id="slider-${ad.id}" onclick="event.stopPropagation()">
+                        ${imgsHTML}
+                        ${ad.images.length > 1 ? `
+                            <button class="slider-btn prev-btn" onclick="slideImage('${ad.id}', -1)"><i class="fas fa-chevron-left"></i></button>
+                            <button class="slider-btn next-btn" onclick="slideImage('${ad.id}', 1)"><i class="fas fa-chevron-right"></i></button>
+                        ` : ''}
+                    </div>
+                    <div class="ad-content" onclick="event.stopPropagation()">
+                        <div style="font-size:12px; color:#888; display:flex; justify-content:space-between;">
+                            <span>${ad.cat}</span> <span style="cursor:pointer; color:#0A84FF;" onclick="searchUserById('${ad.sellerId}')">ID: #${ad.sellerId}</span>
                         </div>
-                        <h3>${ad.title}</h3>
-                        <div style="font-size:20px; color:#30D158; font-weight:bold;">${ad.price} AZN</div>
-                        <p style="font-size:12px; color:#aaa;">Satıcı: ${ad.sellerName} ${verifiedIcon}</p>
-                        <button class="btn btn-glass" onclick="window.open('https://wa.me/${ad.wp}')" style="width:100%; padding:10px; border-radius:10px; border:none; background:rgba(255,255,255,0.1); color:#fff; cursor:pointer;">Satıcıya Yaz</button>
-                        ${adminBtns}
+                        <h3 class="ad-title">${ad.title}</h3>
+                        <div class="ad-price">${ad.price} AZN</div>
+                        <p style="font-size:12px; color:#aaa;">Satıcı: <span style="cursor:pointer; color:#0A84FF;" onclick="showUserProfile('${ad.sellerId}')">${ad.sellerName}</span> ${verifiedBadge}</p>
+                        
+                        <div class="action-row" style="display: ${currentUser.id === ad.sellerId ? 'none' : 'flex'}">
+                            <button class="btn btn-glass" onclick="warningSeller('${ad.wp}', '${ad.title}', '${ad.sellerId}'); event.stopPropagation();">Satıcıya Yaz</button>
+                            <button class="btn btn-gold" onclick="contactAraci('${ad.id}', '${ad.wp}', '${ad.title}', '${ad.price}', '${ad.sellerId}'); event.stopPropagation();">Aracı ilə Al</button>
+                        </div>
+                        ${ownerPanel}
+                        ${adminPanel}
                     </div>
                 </div>
             `;
         });
     }
 
-    // Upload function
-    window.uploadAndPublish = async function() {
-        if(!db) return alert("Verilənlər bazası qoşulmayıb!");
-        const file = document.getElementById('new_img_file').files[0];
-        if(!file) return alert("Şəkil seçin!");
+    window.slideImage = function(adId, dir) {
+        const container = document.getElementById(`slider-${adId}`);
+        const imgs = container.querySelectorAll('.slider-img');
+        let activeIdx = 0;
+        imgs.forEach((img, i) => { if(img.classList.contains('active')) activeIdx = i; });
         
-        document.getElementById('upload-status').style.display = 'block';
-        try {
-            const storageRef = ref(storage, 'ads_images/' + Date.now() + '_' + file.name);
-            await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(storageRef);
-            
-            await addDoc(collection(db, "ads"), {
-                cat: document.getElementById('new_cat').value,
-                title: document.getElementById('new_title').value,
-                price: document.getElementById('new_price').value,
-                wp: document.getElementById('new_wp').value,
-                desc: document.getElementById('new_desc').value,
-                img: url,
-                sellerId: window.currentUser.id,
-                sellerName: window.currentUser.name,
-                sellerVerified: window.currentUser.verified,
-                date: Date.now(), isHot: false, hotUntil: 0
-            });
-            alert("Paylaşıldı!");
-            closeModal('addModal');
-            loadAdsFromFirebase();
-        } catch(e) {
-            console.error(e);
-            alert("Xəta: " + e.message);
-        }
-        document.getElementById('upload-status').style.display = 'none';
+        imgs[activeIdx].classList.remove('active');
+        let newIdx = activeIdx + dir;
+        if (newIdx < 0) newIdx = imgs.length - 1;
+        if (newIdx >= imgs.length) newIdx = 0;
+        imgs[newIdx].classList.add('active');
     }
 
-    // Helper functions
-    window.deleteAd = async (id) => { if(confirm('Silirsən?')) { await deleteDoc(doc(db, 'ads', id)); loadAdsFromFirebase(); }};
-    window.makeHot = async (id, h) => { await updateDoc(doc(db, 'ads', id), {isHot:true, hotUntil: Date.now() + h*3600000}); alert('Hot oldu'); loadAdsFromFirebase(); };
+    function toBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    window.filterAds = function(cat, el) {
+        document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        if (cat === 'all') renderAds(allAds);
+        else renderAds(allAds.filter(a => a.cat === cat));
+    }
+
+    window.contactAraci = function(id, sellerWp, title, price, sellerId) {
+        const msg = `Salam Caspian Store Aracı. Bu elanı almaq istəyirəm:%0A
+        🆔 *Elan ID:* ${id}%0A
+        👤 *Satıcı ID:* ${sellerId}%0A
+        📱 *Satıcı Nömrəsi:* ${sellerWp}%0A
+        🎮 *Elan:* ${title}%0A
+        💰 *Qiymət:* ${price} AZN`;
+        window.open(`https://wa.me/994771048394?text=${msg}`, '_blank');
+    }
+
+    window.warningSeller = function(wp, title, sellerId) {
+        const btn = document.getElementById('confirm-seller-btn');
+        btn.onclick = function() {
+            const msg = `Salam, Caspian Store-dan yazıram. Bu elanla maraqlanıram:%0A
+            🆔 *ID:* ${sellerId}%0A
+            🎮 *Elan:* ${title}`;
+            window.open(`https://wa.me/${wp}?text=${msg}`, '_blank');
+            closeModal('warningModal');
+        };
+        openModal('warningModal');
+    }
+
+    window.deleteAd = function(id) {
+        const ad = allAds.find(a => a.id === id);
+        if (currentUser.id !== ad.sellerId && !currentUser.isAdmin) return alert("Yalnız sahibi və admin siləbilər!");
+        if (!confirm("Silirsən?")) return;
+        allAds = allAds.filter(a => a.id !== id);
+        saveAds();
+        renderAds(allAds);
+    }
+
+    window.toggleHot = function(id) {
+        if (!currentUser.isAdmin) return alert("Yalnız admin!");
+        const ad = allAds.find(a => a.id === id);
+        if (ad) {
+            ad.isHot = !ad.isHot;
+            ad.hotExpire = ad.isHot ? new Date().getTime() + (24 * 60 * 60 * 1000) : null;
+            saveAds();
+            renderAds(allAds);
+        }
+    }
+
+    window.markAsSold = function(id) {
+        const ad = allAds.find(a => a.id === id);
+        if (currentUser.id !== ad.sellerId && !currentUser.isAdmin) return alert("Yalnız sahibi və admin!");
+        if (!confirm("Elanı Satıldı işarətləmək istəyirsiniz?")) return;
+        allAds = allAds.filter(a => a.id !== id);
+        saveAds();
+        renderAds(allAds);
+        closeModal('detailModal');
+    }
+
+    window.openHotPayment = function(adId) {
+        currentHotAdId = adId;
+        openModal('hotPaymentModal');
+    }
+
+    window.purchaseHot = function(adId, hours, price) {
+        const ad = allAds.find(a => a.id === adId);
+        if (!ad) return alert("Elan tapılmadı!");
+        
+        alert(`HOT xidməti aktivləşdirildi (${hours} saat)!\n💰 Qiymət: ${price}₼\n\nReal ödəniş sistemi deyildir (simulyasiya).`);
+        
+        ad.isHot = true;
+        ad.hotExpire = new Date().getTime() + (hours * 60 * 60 * 1000);
+        saveAds();
+        closeModal('hotPaymentModal');
+        renderAds(allAds);
+    }
+
+    window.showAdDetail = function(adId) {
+        const ad = allAds.find(a => a.id === adId);
+        if (!ad) return;
+
+        let imgsHTML = "";
+        ad.images.forEach((img, idx) => {
+            imgsHTML += `<img src="${img}" class="slider-img ${idx === 0 ? 'active' : ''}" data-idx="${idx}" style="width:100%; border-radius:12px; margin-bottom:15px;">`;
+        });
+
+        let actionBtns = `
+            <button class="btn btn-glass" onclick="warningSeller('${ad.wp}', '${ad.title}', '${ad.sellerId}')">Satıcıya Yaz</button>
+            <button class="btn btn-gold" onclick="contactAraci('${ad.id}', '${ad.wp}', '${ad.title}', '${ad.price}', '${ad.sellerId}')">Aracı ilə Al</button>
+        `;
+
+        if (currentUser.id === ad.sellerId) {
+            actionBtns = `
+                <button class="btn btn-primary" onclick="openHotPayment('${ad.id}')">💰 HOT Et</button>
+                <button class="btn btn-danger" onclick="markAsSold('${ad.id}')">✅ Satıldı</button>
+                <button class="btn btn-glass" onclick="deleteAd('${ad.id}')">❌ Sil</button>
+            `;
+        }
+
+        document.getElementById('detail-content').innerHTML = `
+            <div style="margin-bottom:15px;">
+                <div style="background:#2c2c2e; border-radius:12px; padding:15px; margin-bottom:15px;">
+                    <h2 style="margin:0; margin-bottom:10px;">${ad.title}</h2>
+                    <div style="font-size:24px; color:#30D158; font-weight:bold; margin-bottom:10px;">${ad.price} AZN</div>
+                    <p style="margin:5px 0; color:#aaa;"><strong>Kateqoriya:</strong> ${ad.cat}</p>
+                    <p style="margin:5px 0; color:#aaa;"><strong>Satıcı:</strong> <span onclick="showUserProfile('${ad.sellerId}')" style="cursor:pointer; color:#0A84FF;">${ad.sellerName}</span> ${ad.sellerVerified ? '<i class="fas fa-check-circle verified-icon"></i>' : ''}</p>
+                    <p style="margin:5px 0; color:#aaa;"><strong>WhatsApp:</strong> ${ad.wp}</p>
+                </div>
+                <h4>📸 Şəkillər</h4>
+                <div id="detail-slider" style="position:relative;">
+                    ${imgsHTML}
+                    ${ad.images.length > 1 ? `
+                        <button class="slider-btn prev-btn" onclick="slideImage('detail-slider', -1)"><i class="fas fa-chevron-left"></i></button>
+                        <button class="slider-btn next-btn" onclick="slideImage('detail-slider', 1)"><i class="fas fa-chevron-right"></i></button>
+                    ` : ''}
+                </div>
+                <h4 style="margin-top:15px;">📝 Məlumat</h4>
+                <p style="color:#aaa; line-height:1.6;">${ad.desc}</p>
+            </div>
+            <div class="action-row">
+                ${actionBtns}
+            </div>
+        `;
+
+        openModal('detailModal');
+    }
+
+    window.showUserProfile = function(userId) {
+        const userAds = allAds.filter(a => a.sellerId === userId && !a.isSold);
+        const sellerInfo = userAds.length > 0 ? userAds[0] : null;
+        
+        if (!sellerInfo) return alert("İstifadəçi məlumatı yoxdur!");
+
+        let adsListHTML = "";
+        userAds.forEach(ad => {
+            adsListHTML += `<div style="padding:8px; background:#2c2c2e; margin:5px 0; border-radius:8px; cursor:pointer;" onclick="showAdDetail('${ad.id}')">${ad.title} - ${ad.price} AZN</div>`;
+        });
+
+        document.getElementById('profile-content').innerHTML = `
+            <div class="user-profile">
+                <h3>👤 ${sellerInfo.sellerName}</h3>
+                <p><strong>ID:</strong> #${userId}</p>
+                <p><strong>Elanlar:</strong> ${userAds.length}</p>
+                <p><strong>Verified:</strong> ${sellerInfo.sellerVerified ? '✅ Bəli' : '❌ Xeyr'}</p>
+            </div>
+            <h4>📱 Paylaşdığı Elanlar:</h4>
+            ${adsListHTML || '<p style="color:#aaa;">Elan yoxdur</p>'}
+        `;
+
+        openModal('userProfileModal');
+    }
+
+    window.searchUser = function() {
+        const query = document.getElementById('search-user').value.trim();
+        if (query.length === 0) {
+            renderAds(allAds);
+            return;
+        }
+        
+        const results = allAds.filter(ad => ad.sellerId === query && !ad.isSold);
+        if (results.length === 0) {
+            alert("Bu ID'yə aid elan tapılmadı!");
+            return;
+        }
+        
+        renderAds(results);
+    }
+
+    window.searchUserById = function(userId) {
+        document.getElementById('search-user').value = userId;
+        searchUser();
+        showUserProfile(userId);
+    }
+
+    window.openBanModal = function(userId) {
+        document.getElementById('ban-user-id').value = userId;
+        openModal('banReasonModal');
+    }
+
+    window.confirmBanUser = function() {
+        const userId = document.getElementById('ban-user-id').value;
+        const reason = document.getElementById('ban-reason').value;
+
+        if (!userId || !reason) return alert("Bütün xanaları doldurun!");
+        
+        const ad = allAds.find(a => a.sellerId === userId);
+        if (!ad) return alert("İstifadəçi tapılmadı!");
+
+        const userIP = 'IP_' + userId; // Simulyasiya
+        
+        bannedIPs.push({
+            ip: userIP,
+            userId: userId,
+            reason: reason,
+            bannedAt: new Date().toISOString()
+        });
+
+        saveBans();
+        alert(`${userId} ID'li istifadəçi banlandı!`);
+        closeModal('banReasonModal');
+        document.getElementById('ban-user-id').value = "";
+        document.getElementById('ban-reason').value = "";
+    }
+
+    window.showBanList = function() {
+        if (!currentUser.isAdmin) return alert("Yalnız admin!");
+        
+        let banHTML = "";
+        if (bannedIPs.length === 0) {
+            banHTML = '<p style="color:#aaa;">Banlı istifadəçi yoxdur</p>';
+        } else {
+            bannedIPs.forEach((ban, idx) => {
+                banHTML += `
+                    <div style="background:#2c2c2e; padding:12px; margin:10px 0; border-radius:8px;">
+                        <p style="margin:5px 0; color:#FFD700;"><strong>ID:</strong> ${ban.userId}</p>
+                        <p style="margin:5px 0; color:#aaa;"><strong>Səbəb:</strong> ${ban.reason}</p>
+                        <p style="margin:5px 0; font-size:
+11px; color:#666;">Ban Tarixi: ${new Date(ban.bannedAt).toLocaleDateString('az-AZ')}</p>
+                        <button class="btn-mini" onclick="removeBan('${ban.ip}')">🔓 Çıxart</button>
+                    </div>
+                `;
+            });
+        }
+
+        document.getElementById('ban-list-content').innerHTML = banHTML;
+        openModal('banListModal');
+    }
+
+    window.removeBan = function(ip) {
+        if (!confirm("Bu ban'ı çıxartmaq istəyirsiniz?")) return;
+        bannedIPs = bannedIPs.filter(b => b.ip !== ip);
+        saveBans();
+        showBanList();
+    }
+
+    function toggleAdminPanel() {
+        if (currentUser.isAdmin) {
+            showBanList();
+        } else {
+            document.getElementById('admin-login-box').style.display = 'flex';
+        }
+    }
+
+    function closeAdminLogin() { 
+        document.getElementById('admin-login-box').style.display = 'none'; 
+    }
+
+    window.attemptAdminLogin = function() {
+        const name = document.getElementById('login-name').value;
+        const pass = document.getElementById('login-pass').value;
+
+        if (name === 'Adm19' && pass === 'said01') {
+            currentUser.name = "Adm19";
+            currentUser.isAdmin = true;
+            currentUser.isVerified = true;
+            saveUser();
+            alert("Xoş gəldin, Admin!");
+            closeAdminLogin();
+            updateUserUI();
+            renderAds(allAds);
+        } else {
+            alert("Səhv məlumat!");
+        }
+    }
+
     window.openModal = (id) => document.getElementById(id).style.display = 'flex';
     window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 
+    // Modal overlay kapatma
+    document.addEventListener('click', function(e) {
+        const modals = document.querySelectorAll('.modal-overlay');
+        modals.forEach(modal => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
 </script>
-    
-    </body>
-    </html>
+</body>
+</html>
