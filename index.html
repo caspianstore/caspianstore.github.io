@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Caspian Store | Local Ultimate</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
 <style>
     :root {
         --bg: #242424;
@@ -141,6 +143,7 @@
     .user-profile { padding: 15px; background: #2c2c2e; border-radius: 12px; margin-bottom: 15px; }
     .user-profile h3 { margin: 0; }
     .user-profile p { margin: 5px 0; font-size: 12px; color: #aaa; }
+    .loading { text-align: center; padding: 20px; color: #aaa; }
 </style>
 </head>
 <body>
@@ -153,7 +156,7 @@
 
     <div id="app" style="display: none;">
         <header>
-            <div class="logo">CASPIAN STORE</div>
+            <div class="logo">CASPIAN</div>
             <div class="search-box">
                 <input type="text" id="search-user" placeholder="ID ilə axtar..." onkeyup="searchUser()">
             </div>
@@ -180,7 +183,7 @@
             <div class="cat-item" onclick="filterAds('Instagram', this)">Instagram</div>
         </div>
 
-        <div class="container" id="ads-list"></div>
+        <div class="container" id="ads-list"><div class="loading">Yüklənir...</div></div>
 
         <div class="fab" onclick="openModal('addModal')"><i class="fas fa-plus"></i></div>
         <div class="support-fab" onclick="openModal('supportModal')"><i class="fas fa-headset"></i></div>
@@ -292,13 +295,27 @@
     <div id="music-player" style="position:fixed; top:-1000px; opacity:0;"></div>
 
 <script>
+    // Firebase Config
+    const firebaseConfig = {
+        apiKey: "AIzaSyAHlsRmfc2DxAPMu0FCMfv00B_CL9a7C-c",
+        authDomain: "caspian-web.firebaseapp.com",
+        projectId: "caspian-web",
+        storageBucket: "caspian-web.firebasestorage.app",
+        messagingSenderId: "889257417792",
+        appId: "1:889257417792:web:146d6afbdcc4427cdfd3a5",
+        databaseURL: "https://caspian-web-default-rtdb.europe-west1.firebasedatabase.app"
+    };
+
+    // Firebase Initialize
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
     let currentUser = JSON.parse(localStorage.getItem('caspian_user_local')) || null;
-    let allAds = JSON.parse(localStorage.getItem('caspian_ads_local')) || [];
-    let bannedIPs = JSON.parse(localStorage.getItem('caspian_banned_ips')) || [];
+    let allAds = [];
+    let bannedIPs = [];
     let currentHotAdId = null;
     let userIP = null;
 
-    // IP alıntısı (simulyasiya)
     function getUserIP() {
         return 'IP_' + Math.random().toString(36).substr(2, 9).toUpperCase();
     }
@@ -312,65 +329,83 @@
         return ban ? ban.reason : null;
     }
 
+    // Firebase-dən elanları oxu (Real-time)
+    function loadAdsFromFirebase() {
+        database.ref('ads').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                allAds = Object.values(data).map(ad => ({
+                    ...ad,
+                    id: ad.id
+                }));
+            } else {
+                allAds = [];
+            }
+            renderAds(allAds);
+        });
+    }
+
+    // Firebase-dən ban listini oxu
+    function loadBansFromFirebase() {
+        database.ref('bans').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                bannedIPs = Object.values(data);
+            } else {
+                bannedIPs = [];
+            }
+        });
+    }
+
     function initApp() {
         userIP = getUserIP();
 
-        // IP ban kontrolü
-        if (isIPBanned(userIP)) {
-            const reason = getBanReason(userIP);
-            document.body.innerHTML = `
-                <div class="ban-message">
-                    <h2>🚫 Sizin ID'niz Banlanıb</h2>
-                    <p style="margin: 20px 0; font-size: 14px;">${reason || 'Səbəb açıklanmamışdır.'}</p>
-                    <p style="font-size: 12px; color: #ccc;">Admin desteyi için: wa.me/994771048394</p>
-                </div>
-            `;
-            return;
-        }
+        loadBansFromFirebase();
 
-        // User yoxla
-        if (!currentUser) {
-            const newId = Math.floor(100000 + Math.random() * 900000).toString();
-            currentUser = { 
-                id: newId, 
-                name: "User", 
-                isAdmin: false, 
-                isBanned: false, 
-                isVerified: false,
-                ip: userIP,
-                createdAt: new Date().toISOString()
-            };
-            saveUser();
-        }
+        setTimeout(() => {
+            if (isIPBanned(userIP)) {
+                const reason = getBanReason(userIP);
+                document.body.innerHTML = `
+                    <div class="ban-message">
+                        <h2>🚫 Sizin ID'niz Banlanıb</h2>
+                        <p style="margin: 20px 0; font-size: 14px;">${reason || 'Səbəb açıklanmamışdır.'}</p>
+                        <p style="font-size: 12px; color: #ccc;">Admin desteyi için: wa.me/994771048394</p>
+                    </div>
+                `;
+                return;
+            }
 
-        if (currentUser.isBanned) {
-            alert("SİZİN ID BANLANIB!");
-            document.body.innerHTML = "<h1 style='color:white; text-align:center; margin-top:50px;'>BANLANDINIZ</h1>";
-            return;
-        }
+            if (!currentUser) {
+                const newId = Math.floor(100000 + Math.random() * 900000).toString();
+                currentUser = { 
+                    id: newId, 
+                    name: "User", 
+                    isAdmin: false, 
+                    isBanned: false, 
+                    isVerified: false,
+                    ip: userIP,
+                    createdAt: new Date().toISOString()
+                };
+                localStorage.setItem('caspian_user_local', JSON.stringify(currentUser));
+            }
 
-        // Musiqi
-        const playlist = ['rVkCOfUDCaM', 'PfnJ7lRX0pY', 'zJXhT4sVlK0'];
-        const randomVid = playlist[Math.floor(Math.random() * playlist.length)];
-        document.getElementById('music-player').innerHTML = 
-            `<iframe width="1" height="1" src="https://www.youtube.com/embed/${randomVid}?autoplay=1&loop=1&playlist=${playlist.join(',')}" frameborder="0" allow="autoplay"></iframe>`;
+            if (currentUser.isBanned) {
+                alert("SİZİN ID BANLANIB!");
+                document.body.innerHTML = "<h1 style='color:white; text-align:center; margin-top:50px;'>BANLANDINIZ</h1>";
+                return;
+            }
 
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        updateUserUI();
-        renderAds(allAds);
-    }
+            // Musiqi
+            const playlist = ['rVkCOfUDCaM', 'PfnJ7lRX0pY', 'zJXhT4sVlK0'];
+            const randomVid = playlist[Math.floor(Math.random() * playlist.length)];
+            document.getElementById('music-player').innerHTML = 
+                `<iframe width="1" height="1" src="https://www.youtube.com/embed/${randomVid}?autoplay=1&loop=1&playlist=${playlist.join(',')}" frameborder="0" allow="autoplay"></iframe>`;
 
-    function saveUser() { 
-        localStorage.setItem('caspian_user_local', JSON.stringify(currentUser)); 
-    }
-
-    function saveAds() { 
-        localStorage.setItem('caspian_ads_local', JSON.stringify(allAds)); 
-    }
-
-    function saveBans() {
-        localStorage.setItem('caspian_banned_ips', JSON.stringify(bannedIPs));
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            updateUserUI();
+            loadAdsFromFirebase();
+        }, 500);
     }
 
     function updateUserUI() {
@@ -391,8 +426,9 @@
             imagesBase64.push(base64);
         }
 
+        const newAdId = Date.now().toString();
         const newAd = {
-            id: Date.now().toString(),
+            id: newAdId,
             sellerId: currentUser.id,
             sellerName: currentUser.name,
             sellerVerified: currentUser.isVerified,
@@ -410,23 +446,22 @@
 
         if(!newAd.title || !newAd.price || !newAd.wp) return alert("Xanaları doldurun!");
 
-        allAds.unshift(newAd);
-        saveAds();
-        closeModal('addModal');
-        renderAds(allAds);
-        
-        document.getElementById('new_title').value = "";
-        document.getElementById('new_price').value = "";
-        document.getElementById('new_wp').value = "";
-        document.getElementById('new_desc').value = "";
-        document.getElementById('new_imgs').value = "";
+        // Firebase-ə yazı
+        database.ref('ads/' + newAdId).set(newAd).then(() => {
+            alert("Elan paylaşıldı! ✅");
+            closeModal('addModal');
+            document.getElementById('new_title').value = "";
+            document.getElementById('new_price').value = "";
+            document.getElementById('new_wp').value = "";
+            document.getElementById('new_desc').value = "";
+            document.getElementById('new_imgs').value = "";
+        }).catch(err => alert("Xəta: " + err.message));
     }
 
     function renderAds(ads) {
         const list = document.getElementById('ads-list');
         list.innerHTML = "";
         
-        // HOT elanları başa al
         const sortedAds = ads.sort((a, b) => {
             if (a.isHot && !b.isHot) return -1;
             if (!a.isHot && b.isHot) return 1;
@@ -434,7 +469,7 @@
         });
 
         sortedAds.forEach(ad => {
-            if (ad.isSold) return; // Satıldı elanları g��stermə
+            if (ad.isSold) return;
             
             const isHot = ad.isHot ? 'hot' : '';
             const hotBadge = ad.isHot ? '<div class="hot-badge">🔥 HOT</div>' : '';
@@ -461,9 +496,9 @@
                 adminPanel = `
                     <div style="background:#000; padding:10px; margin-top:10px; border-radius:10px;">
                         <small style="color:red">ADMIN PANEL:</small><br>
-                        <button class="btn-mini" onclick="deleteAd('${ad.id}')">❌ Sil</button>
                         <button class="btn-mini" onclick="toggleHot('${ad.id}')">🔥 Hot</button>
                         <button class="btn-mini" onclick="markAsSold('${ad.id}')">✅ Satıldı</button>
+                        <button class="btn-mini" onclick="deleteAd('${ad.id}')">❌ Sil</button>
                         <button class="btn-mini" onclick="openBanModal('${ad.sellerId}')">🚫 Ban</button>
                     </div>`;
             }
@@ -553,19 +588,19 @@
         const ad = allAds.find(a => a.id === id);
         if (currentUser.id !== ad.sellerId && !currentUser.isAdmin) return alert("Yalnız sahibi və admin siləbilər!");
         if (!confirm("Silirsən?")) return;
-        allAds = allAds.filter(a => a.id !== id);
-        saveAds();
-        renderAds(allAds);
+        database.ref('ads/' + id).remove().then(() => {
+            alert("Elan silindi!");
+        });
     }
 
     window.toggleHot = function(id) {
         if (!currentUser.isAdmin) return alert("Yalnız admin!");
         const ad = allAds.find(a => a.id === id);
         if (ad) {
-            ad.isHot = !ad.isHot;
-            ad.hotExpire = ad.isHot ? new Date().getTime() + (24 * 60 * 60 * 1000) : null;
-            saveAds();
-            renderAds(allAds);
+            database.ref('ads/' + id).update({
+                isHot: !ad.isHot,
+                hotExpire: !ad.isHot ? new Date().getTime() + (24 * 60 * 60 * 1000) : null
+            });
         }
     }
 
@@ -573,10 +608,10 @@
         const ad = allAds.find(a => a.id === id);
         if (currentUser.id !== ad.sellerId && !currentUser.isAdmin) return alert("Yalnız sahibi və admin!");
         if (!confirm("Elanı Satıldı işarətləmək istəyirsiniz?")) return;
-        allAds = allAds.filter(a => a.id !== id);
-        saveAds();
-        renderAds(allAds);
-        closeModal('detailModal');
+        database.ref('ads/' + id).remove().then(() => {
+            alert("Elan silindi!");
+            closeModal('detailModal');
+        });
     }
 
     window.openHotPayment = function(adId) {
@@ -590,11 +625,11 @@
         
         alert(`HOT xidməti aktivləşdirildi (${hours} saat)!\n💰 Qiymət: ${price}₼\n\nReal ödəniş sistemi deyildir (simulyasiya).`);
         
-        ad.isHot = true;
-        ad.hotExpire = new Date().getTime() + (hours * 60 * 60 * 1000);
-        saveAds();
+        database.ref('ads/' + adId).update({
+            isHot: true,
+            hotExpire: new Date().getTime() + (hours * 60 * 60 * 1000)
+        });
         closeModal('hotPaymentModal');
-        renderAds(allAds);
     }
 
     window.showAdDetail = function(adId) {
@@ -700,6 +735,8 @@
     }
 
     window.confirmBanUser = function() {
+        if (!currentUser.isAdmin) return alert("Yalnız admin!");
+        
         const userId = document.getElementById('ban-user-id').value;
         const reason = document.getElementById('ban-reason').value;
 
@@ -708,20 +745,20 @@
         const ad = allAds.find(a => a.sellerId === userId);
         if (!ad) return alert("İstifadəçi tapılmadı!");
 
-        const userIP = 'IP_' + userId; // Simulyasiya
+        const userIP = 'IP_' + userId;
+        const banId = Date.now().toString();
         
-        bannedIPs.push({
+        database.ref('bans/' + banId).set({
             ip: userIP,
             userId: userId,
             reason: reason,
             bannedAt: new Date().toISOString()
+        }).then(() => {
+            alert(`${userId} ID'li istifadəçi banlandı!`);
+            closeModal('banReasonModal');
+            document.getElementById('ban-user-id').value = "";
+            document.getElementById('ban-reason').value = "";
         });
-
-        saveBans();
-        alert(`${userId} ID'li istifadəçi banlandı!`);
-        closeModal('banReasonModal');
-        document.getElementById('ban-user-id').value = "";
-        document.getElementById('ban-reason').value = "";
     }
 
     window.showBanList = function() {
@@ -731,13 +768,12 @@
         if (bannedIPs.length === 0) {
             banHTML = '<p style="color:#aaa;">Banlı istifadəçi yoxdur</p>';
         } else {
-            bannedIPs.forEach((ban, idx) => {
+            bannedIPs.forEach((ban) => {
                 banHTML += `
                     <div style="background:#2c2c2e; padding:12px; margin:10px 0; border-radius:8px;">
                         <p style="margin:5px 0; color:#FFD700;"><strong>ID:</strong> ${ban.userId}</p>
                         <p style="margin:5px 0; color:#aaa;"><strong>Səbəb:</strong> ${ban.reason}</p>
-                        <p style="margin:5px 0; font-size:
-11px; color:#666;">Ban Tarixi: ${new Date(ban.bannedAt).toLocaleDateString('az-AZ')}</p>
+                        <p style="margin:5px 0; font-size:11px; color:#666;">Ban Tarixi: ${new Date(ban.bannedAt).toLocaleDateString('az-AZ')}</p>
                         <button class="btn-mini" onclick="removeBan('${ban.ip}')">🔓 Çıxart</button>
                     </div>
                 `;
@@ -750,9 +786,15 @@
 
     window.removeBan = function(ip) {
         if (!confirm("Bu ban'ı çıxartmaq istəyirsiniz?")) return;
-        bannedIPs = bannedIPs.filter(b => b.ip !== ip);
-        saveBans();
-        showBanList();
+        const banToRemove = bannedIPs.find(b => b.ip === ip);
+        if (banToRemove) {
+            database.ref('bans').orderByChild('ip').equalTo(ip).once('value', (snapshot) => {
+                snapshot.forEach((childSnapshot) => {
+                    database.ref('bans/' + childSnapshot.key).remove();
+                });
+                showBanList();
+            });
+        }
     }
 
     function toggleAdminPanel() {
@@ -775,7 +817,7 @@
             currentUser.name = "Adm19";
             currentUser.isAdmin = true;
             currentUser.isVerified = true;
-            saveUser();
+            localStorage.setItem('caspian_user_local', JSON.stringify(currentUser));
             alert("Xoş gəldin, Admin!");
             closeAdminLogin();
             updateUserUI();
@@ -788,7 +830,6 @@
     window.openModal = (id) => document.getElementById(id).style.display = 'flex';
     window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 
-    // Modal overlay kapatma
     document.addEventListener('click', function(e) {
         const modals = document.querySelectorAll('.modal-overlay');
         modals.forEach(modal => {
